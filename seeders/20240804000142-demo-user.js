@@ -26,6 +26,7 @@ module.exports = {
         last_education: 'S1 - sistem informasi',
         stay_with: 'wife and childs',
         job: 'programmer',
+        status: 'active',
         createdAt: new Date(),
         updatedAt: new Date(),
       },
