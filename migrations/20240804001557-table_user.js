@@ -29,7 +29,7 @@ module.exports = {
       },
       name: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       birthdate: {
         type: Sequelize.DATEONLY,
@@ -37,16 +37,16 @@ module.exports = {
       },
       address: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       phone: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       gender: {
         type: Sequelize.ENUM('m', 'f'),
         defaultValue: 'm',
-        allowNull: false,
+        allowNull: true,
       },
       marriage_status: {
         type: Sequelize.BOOLEAN,
@@ -54,15 +54,15 @@ module.exports = {
       },
       last_education: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       stay_with: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       job: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       createdAt: {
         allowNull: false,

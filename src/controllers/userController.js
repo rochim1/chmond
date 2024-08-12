@@ -120,7 +120,7 @@ const createUser = async (req, res) => {
     }
 
     // Hash the password
-    let hashPassword = await bcrypt.hash(password, 10);
+    let hashPassword = encrypt(password, process.env.SALT);
 
     // Create new user
     const user = await User.create({
@@ -261,6 +261,42 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const crypto = require('crypto');
+
+// Encryption function with string salt
+function encrypt(text, salt) {
+  const algorithm = 'aes-256-cbc';
+  const key = crypto.randomBytes(32);  // 32 bytes key for aes-256-cbc
+  const iv = crypto.randomBytes(16);   // 16 bytes IV
+
+  // Combine salt with the text
+  const saltedText = salt + text;
+
+  const cipher = crypto.createCipheriv(algorithm, key, iv);
+  let encrypted = cipher.update(saltedText, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+
+  return {
+    iv: iv.toString('hex'),
+    encryptedData: encrypted,
+    key: key.toString('hex'),
+    salt: salt
+  };
+}
+
+// Decryption function with string salt
+function decrypt(encryptedData, key, iv, salt) {
+  const algorithm = 'aes-256-cbc';
+
+  const decipher = crypto.createDecipheriv(algorithm, Buffer.from(key, 'hex'), Buffer.from(iv, 'hex'));
+  let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+
+  // Remove the salt from the beginning of the decrypted text
+  const originalText = decrypted.slice(salt.length);
+
+  return originalText;
+}
 
 module.exports = {
   getAllUsers,

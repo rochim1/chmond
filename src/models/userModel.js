@@ -21,7 +21,7 @@ const User = sequelize.define('User', {
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   birthdate: {
     type: DataTypes.DATEONLY,
@@ -29,16 +29,16 @@ const User = sequelize.define('User', {
   },
   address: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   phone: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   gender: {
     type: DataTypes.ENUM('m', 'f'),
     defaultValue: 'm',
-    allowNull: false,
+    allowNull: true,
   },
   marriage_status: {
     type: DataTypes.BOOLEAN,
@@ -46,20 +46,20 @@ const User = sequelize.define('User', {
   },
   last_education: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   stay_with: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   job: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   status: {
     type: DataTypes.ENUM('active', 'deleted'),
     defaultValue: 'active',
-    allowNull: false,
+    allowNull: true,
   }
 });
 
