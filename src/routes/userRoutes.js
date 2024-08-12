@@ -1,15 +1,21 @@
 const express = require('express');
+const app = express();
 const userController = require('../controllers/userController');
-const router = express.Router();
 
-router.get('/users', userController.getAllUsers);
+const userValidator = require('../validations/userValidator');
+// const router = express.Router();
+
+const apiRouter = express.Router();
+apiRouter.get('/users', userController.getAllUsers);
 
 
 // User Routes
-router.post('/users', userController.createUser); // Create a new user
-router.post('/auth/google', userController.createUserByGoogle); // Authenticate with Google
-router.post('/login', userController.login); // Login user
-router.put('/users/:id_user', userController.editUser); // Edit user
-router.delete('/users/:id_user', userController.deleteUser); // Delete user
+apiRouter.post('/users/create', userValidator, userController.createUser); // Create a new user
+apiRouter.post('/auth/google', userController.createUserByGoogle); // Authenticate with Google
+apiRouter.post('/login', userController.login); // Login user
+apiRouter.put('/users/:id_user', userController.editUser); // Edit user
+apiRouter.delete('/users/:id_user', userController.deleteUser); // Delete user
 
-module.exports = router;
+app.use('/api', apiRouter);
+
+module.exports = apiRouter;

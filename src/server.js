@@ -2,6 +2,13 @@ require('dotenv').config();
 const sequelize = require('./config/database');
 const app = require('./app');
 
+// prismaClient.js
+// const { PrismaClient } = require('@prisma/client');
+// const prisma = new PrismaClient();
+
+// module.exports = prisma;
+
+
 const PORT = process.env.PORT || 3000;
 
 sequelize.authenticate()
