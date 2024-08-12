@@ -1,12 +1,44 @@
-const { check, validationResult } = require('express-validator');
-
+const {
+  check,
+  validationResult
+} = require('express-validator');
+const User = require('../models/userModel');
 // Validation rules for the fields
 const validateUser = [
   // require
-  check('email').isEmail().withMessage('Invalid email address'),
-  check('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-  check('username').notEmpty().withMessage('Username is required'),
-  
+  check('email')
+  .isEmail().withMessage('Please enter a valid email address')
+  .notEmpty().withMessage('Email is required')
+  .custom(async (value) => {
+    // Check if the email already exists in the database
+    const user = await User.findOne({
+      where: {
+        email: value,
+        status: 'active'
+      }
+    });
+    if (user) {
+      throw new Error('Email already in use');
+    }
+    return true;
+  }),
+  check('password').isLength({
+    min: 6
+  }).withMessage('Password must be at least 6 characters long'),
+  check('username').notEmpty().withMessage('Username is required').custom(async (value) => {
+    // Check if the email already exists in the database
+    const user = await User.findOne({
+      where: {
+        username: value,
+        status: 'active'
+      }
+    });
+    if (user) {
+      throw new Error('Username already in use');
+    }
+    return true;
+  }),
+
   // not require (.optional())
   // check('name').notEmpty().withMessage('Name is required'),
   check('birthdate').optional().isDate().withMessage('Invalid birthdate'),

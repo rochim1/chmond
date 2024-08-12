@@ -10,6 +10,10 @@ const User = sequelize.define('User', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true, // This ensures the email must be unique
+    validate: {
+      isEmail: true // Optional: Validates that the input is in email format
+    }
   },
   password: {
     type: DataTypes.STRING,
@@ -17,6 +21,7 @@ const User = sequelize.define('User', {
   },
   username: {
     type: DataTypes.STRING,
+    unique: true,
     allowNull: false,
   },
   name: {

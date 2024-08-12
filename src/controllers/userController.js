@@ -125,7 +125,7 @@ const createUser = async (req, res) => {
     // Create new user
     const user = await User.create({
       email,
-      password: hashPassword,
+      password: hashPassword.encryptedData,
       username,
       name,
       birthdate,
