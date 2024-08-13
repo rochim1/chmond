@@ -1,5 +1,6 @@
 const UserService = require('../services/userService');
 const User = require('../models/userModel'); // Adjust the path to your models if needed
+const UserLogAccessModel = require('../models/userLogAccessModel'); // Adjust the path to your models if needed
 const bcrypt = require('bcryptjs'); // For hashing passwords
 const {
   validationResult
@@ -23,62 +24,21 @@ const getAllUsers = async (req, res) => {
 
 const logUserAccess = async (req, res) => {
   try {
-    // Extract user data from request
-    const { email, password, infinite_token, remember_me } = req.body;
+    const { id_user, datetime, access_via } = req.body;
+    let userAccess = await UserLogAccessModel.create({
+      id_user,
+      datetime,
+      access_via
+    })
 
-    // Validate request
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    // Find user by email
-    const user = await User.findOne({ where: { email, status: "active" } });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    // Check password
-    let isMatch = false;
-    if (password == decrypt(user.password, process.env.SALT)) {
-      isMatch = true;
-    }
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    let token;
-    if (infinite_token) {
-      // Generate token
-      token = jwt.sign(
-        { id: user.id_user, email: user.email },
-        process.env.JWT_SECRET
-        // { expiresIn: '1h' } // Adjust expiration time as necessary
-      );
-    } else if (remember_me) {
-      token = jwt.sign(
-        { id: user.id_user, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '30d' } // Adjust expiration time as necessary
-      );
-    } else {
-      token = jwt.sign(
-        { id: user.id_user, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' } // Adjust expiration time as necessary
-      );
-    }
-
-    // Respond with token
-    res.status(200).json({
-      message: 'Login successful',
-      infinite_token,
-      remember_me,
-      token,
-      data: user
+    return res.status(200).json({
+      success: true,
+      data: userAccess
     });
+
   } catch (error) {
     res.status(500).json({
+      success: false,
       code: "INTERNAL_SERVER_ERROR",
       error: error.message
     });
@@ -135,6 +95,7 @@ const login = async (req, res) => {
 
     // Respond with token
     res.status(200).json({
+      success: true,
       message: 'Login successful',
       infinite_token,
       remember_me,
@@ -364,6 +325,7 @@ function decrypt(encryptedText, salt) {
 }
 
 module.exports = {
+  logUserAccess,
   getAllUsers,
   createUser,
   login,

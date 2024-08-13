@@ -9,7 +9,7 @@ const loginValidator = require('../validations/loginValidator');
 const apiRouter = express.Router();
 apiRouter.get('/users', userController.getAllUsers);
 
-// apiRouter.post('/users/log_access', userController.logUserAccess); // Create a new user
+apiRouter.post('/users/log_access', userController.logUserAccess); // Create a new user
 
 // User Routes
 apiRouter.post('/login', loginValidator, userController.login); // Login user

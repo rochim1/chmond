@@ -25,8 +25,12 @@ const validateUser = [
   check('password').isLength({
     min: 6
   }).withMessage('Password must be at least 6 characters long'),
-  check('username').notEmpty().withMessage('Username is required').custom(async (value) => {
+  check('username').optional().custom(async (value) => {
     // Check if the email already exists in the database
+    if (!value) {
+      return true;
+    }
+    
     const user = await User.findOne({
       where: {
         username: value,
