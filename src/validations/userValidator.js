@@ -14,7 +14,7 @@ const validateUser = [
     const user = await User.findOne({
       where: {
         email: value,
-        status: 'active'
+        // status: 'active'
       }
     });
     if (user) {
@@ -34,7 +34,7 @@ const validateUser = [
     const user = await User.findOne({
       where: {
         username: value,
-        status: 'active'
+        // status: 'active'
       }
     });
     if (user) {

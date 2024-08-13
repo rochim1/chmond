@@ -15,10 +15,11 @@ apiRouter.post('/users/log_access', userController.logUserAccess); // Create a n
 apiRouter.post('/login', loginValidator, userController.login); // Login user
 apiRouter.post('/auth/google', userController.createUserByGoogle); // Authenticate with Google
 
+apiRouter.get('/users', userController.getAllUsers); // View all user
+apiRouter.get('/users/:id_user', userController.getOneUsers); // View user
 apiRouter.post('/users/create', userValidator, userController.createUser); // Create a new user
 apiRouter.put('/users/update/:id_user', userController.updateUser); // Update a new user
-apiRouter.post('/users/delete', userController.deleteUser); // Update a new user
-apiRouter.delete('/users/:id_user', userController.deleteUser); // Delete user
+apiRouter.delete('/users/delete/:id_user', userController.deleteUser); // Delete user
 
 app.use('/api', apiRouter);
 

@@ -10,13 +10,74 @@ const {
 } = require('../utils/userUtilities')
 const jwt = require('jsonwebtoken');
 
-const getAllUsers = async (req, res) => {
+const getOneUsers = async (req, res) => {
   try {
-    const users = await UserService.getAllUsers();
-    res.json(users);
+
+    const {
+      id_user
+    } = req.params;
+
+    if (!id_user) {
+      res.status(400).json({
+        success: false,
+        code: "BAD_REQUEST",
+        error: "can't get id_user"
+      });
+    }
+
+    const user = await User.findOne({
+      where: {
+        id_user,
+        status: 'active'
+      }
+    });
+    
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        code: "NOT_FOUND",
+        error: 'user not found'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      data: user
+    });
   } catch (error) {
     res.status(500).json({
-      code: "INTERNAL_SERVER_ERROR",
+      success: false,
+      message: 'INTERNAL_SERVER_ERROR',
+      error: error.message
+    });
+  }
+};
+
+const getAllUsers = async (req, res) => {
+  try {
+    const { page = 1, pageSize = 10 } = req.body;
+    const { status } = req.body && req.body.filter ? req.body.filter : { status : 'active'};
+    console.log(status)
+    const offset = (page - 1) * pageSize;
+    const limit = parseInt(pageSize);
+
+    const users = await User.findAndCountAll({
+      where: { status },
+      offset,
+      limit
+    });
+
+    res.status(200).json({
+      success: true,
+      totalItems: users.count,
+      totalPages: Math.ceil(users.count / pageSize),
+      currentPage: parseInt(page),
+      users: users.rows
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      code: 'INTERNAL_SERVER_ERROR',
       error: error.message
     });
   }
@@ -24,7 +85,11 @@ const getAllUsers = async (req, res) => {
 
 const logUserAccess = async (req, res) => {
   try {
-    const { id_user, datetime, access_via } = req.body;
+    const {
+      id_user,
+      datetime,
+      access_via
+    } = req.body;
     let userAccess = await UserLogAccessModel.create({
       id_user,
       datetime,
@@ -48,18 +113,32 @@ const logUserAccess = async (req, res) => {
 const login = async (req, res) => {
   try {
     // Extract user data from request
-    const { email, password, infinite_token, remember_me } = req.body;
+    const {
+      email,
+      password,
+      infinite_token,
+      remember_me
+    } = req.body;
 
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({
+        errors: errors.array()
+      });
     }
 
     // Find user by email
-    const user = await User.findOne({ where: { email, status: "active" } });
+    const user = await User.findOne({
+      where: {
+        email,
+        status: "active"
+      }
+    });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' });
+      return res.status(400).json({
+        message: 'Invalid email or password'
+      });
     }
 
     // Check password
@@ -68,28 +147,38 @@ const login = async (req, res) => {
       isMatch = true;
     }
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password' });
+      return res.status(400).json({
+        message: 'Invalid email or password'
+      });
     }
 
     let token;
     if (infinite_token) {
       // Generate token
-      token = jwt.sign(
-        { id: user.id_user, email: user.email },
+      token = jwt.sign({
+          id: user.id_user,
+          email: user.email
+        },
         process.env.JWT_SECRET
         // { expiresIn: '1h' } // Adjust expiration time as necessary
       );
     } else if (remember_me) {
-      token = jwt.sign(
-        { id: user.id_user, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '30d' } // Adjust expiration time as necessary
+      token = jwt.sign({
+          id: user.id_user,
+          email: user.email
+        },
+        process.env.JWT_SECRET, {
+          expiresIn: '30d'
+        } // Adjust expiration time as necessary
       );
     } else {
-      token = jwt.sign(
-        { id: user.id_user, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' } // Adjust expiration time as necessary
+      token = jwt.sign({
+          id: user.id_user,
+          email: user.email
+        },
+        process.env.JWT_SECRET, {
+          expiresIn: '1h'
+        } // Adjust expiration time as necessary
       );
     }
 
@@ -104,7 +193,8 @@ const login = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      code: "INTERNAL_SERVER_ERROR",
+      success: false,
+      message: 'INTERNAL_SERVER_ERROR',
       error: error.message
     });
   }
@@ -118,7 +208,7 @@ const createUser = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        code: 'INVALID_REQUEST',
+        code: 'BAD_REQUEST',
         errors: errors.array()
       });
     }
@@ -181,7 +271,9 @@ const createUser = async (req, res) => {
     // Handle errors
     console.error('Error creating user:', error);
     res.status(500).json({
-      message: 'INTERNAL_SERVER_ERROR'
+      success: false,
+      message: 'INTERNAL_SERVER_ERROR',
+      error: error.message
     });
   }
 };
@@ -193,7 +285,8 @@ const createUserByGoogle = async (req, res) => {
     })(req, res);
   } catch (error) {
     res.status(500).json({
-      code: "INTERNAL_SERVER_ERROR",
+      success: false,
+      message: 'INTERNAL_SERVER_ERROR',
       error: error.message
     });
   }
@@ -215,6 +308,7 @@ const updateUser = async (req, res) => {
     } = req.params; // User ID from the URL
     const {
       email,
+      password,
       username,
       name,
       birthdate,
@@ -228,7 +322,13 @@ const updateUser = async (req, res) => {
     } = req.body;
 
     // Find the user by ID
-    const user = await User.findByPk(id_user);
+    const user = await User.findOne({
+      where: {
+        id_user,
+        status: 'active'
+      }
+    });
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -237,11 +337,15 @@ const updateUser = async (req, res) => {
       });
     }
 
+    if (password) {
+      password = encrypt(password, process.env.SALT)
+    }
     // Update user details
     await user.update({
       email,
       username,
       name,
+      password,
       birthdate,
       address,
       phone,
@@ -262,7 +366,9 @@ const updateUser = async (req, res) => {
     // Handle errors
     console.error('Error updating user:', error);
     res.status(500).json({
-      message: 'INTERNAL_SERVER_ERROR'
+      success: false,
+      message: 'INTERNAL_SERVER_ERROR',
+      error: error.message
     });
   }
 };
@@ -275,24 +381,38 @@ const deleteUser = async (req, res) => {
     } = req.params;
 
     // Find and delete the user
-    const user = await User.findByPk(id_user);
+    const user = await User.findOne({
+      where: {
+        id_user,
+        status: 'active'
+      }
+    });
+
     if (!user) {
       return res.status(404).json({
+        success: false,
+        code: "NOT_FOUND",
         message: 'User not found'
       });
     }
 
-    await user.destroy();
+    await user.update({
+      status: 'deleted'
+    });
 
     // Respond with a success message
     res.status(200).json({
-      message: 'User deleted successfully'
+      success: true,
+      message: 'User deleted successfully',
+      data: user.status
     });
   } catch (error) {
     // Handle errors
     console.error('Error deleting user:', error);
     res.status(500).json({
-      message: 'INTERNAL_SERVER_ERROR'
+      success: false,
+      message: 'INTERNAL_SERVER_ERROR',
+      error: error.message
     });
   }
 };
@@ -331,5 +451,6 @@ module.exports = {
   login,
   createUserByGoogle,
   updateUser,
-  deleteUser
+  deleteUser,
+  getOneUsers
 }
