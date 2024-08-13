@@ -7,6 +7,7 @@ const {
 const {
   loginWithGoogle
 } = require('../utils/userUtilities')
+const jwt = require('jsonwebtoken');
 
 const getAllUsers = async (req, res) => {
   try {
@@ -20,54 +21,61 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-const login = async (req, res) => {
+const logUserAccess = async (req, res) => {
   try {
     // Extract user data from request
-    const {
-      email,
-      password
-    } = req.body;
+    const { email, password, infinite_token, remember_me } = req.body;
 
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
-        errors: errors.array()
-      });
+      return res.status(400).json({ errors: errors.array() });
     }
 
     // Find user by email
-    const user = await User.findOne({
-      where: {
-        email
-      }
-    });
+    const user = await User.findOne({ where: { email, status: "active" } });
     if (!user) {
-      return res.status(400).json({
-        message: 'Invalid email or password'
-      });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
     // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
+    let isMatch = false;
+    if (password == decrypt(user.password, process.env.SALT)) {
+      isMatch = true;
+    }
     if (!isMatch) {
-      return res.status(400).json({
-        message: 'Invalid email or password'
-      });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Generate token
-    const token = jwt.sign({
-      id: user.id_user,
-      email: user.email
-    }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    let token;
+    if (infinite_token) {
+      // Generate token
+      token = jwt.sign(
+        { id: user.id_user, email: user.email },
+        process.env.JWT_SECRET
+        // { expiresIn: '1h' } // Adjust expiration time as necessary
+      );
+    } else if (remember_me) {
+      token = jwt.sign(
+        { id: user.id_user, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' } // Adjust expiration time as necessary
+      );
+    } else {
+      token = jwt.sign(
+        { id: user.id_user, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' } // Adjust expiration time as necessary
+      );
+    }
 
     // Respond with token
     res.status(200).json({
       message: 'Login successful',
-      token
+      infinite_token,
+      remember_me,
+      token,
+      data: user
     });
   } catch (error) {
     res.status(500).json({
@@ -75,7 +83,71 @@ const login = async (req, res) => {
       error: error.message
     });
   }
-}
+};
+
+const login = async (req, res) => {
+  try {
+    // Extract user data from request
+    const { email, password, infinite_token, remember_me } = req.body;
+
+    // Validate request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ where: { email, status: "active" } });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    // Check password
+    let isMatch = false;
+    if (password == decrypt(user.password, process.env.SALT)) {
+      isMatch = true;
+    }
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    let token;
+    if (infinite_token) {
+      // Generate token
+      token = jwt.sign(
+        { id: user.id_user, email: user.email },
+        process.env.JWT_SECRET
+        // { expiresIn: '1h' } // Adjust expiration time as necessary
+      );
+    } else if (remember_me) {
+      token = jwt.sign(
+        { id: user.id_user, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' } // Adjust expiration time as necessary
+      );
+    } else {
+      token = jwt.sign(
+        { id: user.id_user, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' } // Adjust expiration time as necessary
+      );
+    }
+
+    // Respond with token
+    res.status(200).json({
+      message: 'Login successful',
+      infinite_token,
+      remember_me,
+      token,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({
+      code: "INTERNAL_SERVER_ERROR",
+      error: error.message
+    });
+  }
+};
 
 // mutation
 const createUser = async (req, res) => {
@@ -125,7 +197,7 @@ const createUser = async (req, res) => {
     // Create new user
     const user = await User.create({
       email,
-      password: hashPassword.encryptedData,
+      password: hashPassword,
       username,
       name,
       birthdate,
@@ -148,7 +220,7 @@ const createUser = async (req, res) => {
     // Handle errors
     console.error('Error creating user:', error);
     res.status(500).json({
-      message: 'Internal server error'
+      message: 'INTERNAL_SERVER_ERROR'
     });
   }
 };
@@ -166,7 +238,7 @@ const createUserByGoogle = async (req, res) => {
   }
 }
 
-const editUser = async (req, res) => {
+const updateUser = async (req, res) => {
   try {
     // Validate request
     const errors = validationResult(req);
@@ -198,6 +270,8 @@ const editUser = async (req, res) => {
     const user = await User.findByPk(id_user);
     if (!user) {
       return res.status(404).json({
+        success: false,
+        code: "NOT_FOUND",
         message: 'User not found'
       });
     }
@@ -219,14 +293,15 @@ const editUser = async (req, res) => {
 
     // Respond with updated user details
     res.status(200).json({
+      success: true,
       message: 'User updated successfully',
-      user
+      data: user
     });
   } catch (error) {
     // Handle errors
     console.error('Error updating user:', error);
     res.status(500).json({
-      message: 'Internal server error'
+      message: 'INTERNAL_SERVER_ERROR'
     });
   }
 };
@@ -256,46 +331,36 @@ const deleteUser = async (req, res) => {
     // Handle errors
     console.error('Error deleting user:', error);
     res.status(500).json({
-      message: 'Internal server error'
+      message: 'INTERNAL_SERVER_ERROR'
     });
   }
 };
 
 const crypto = require('crypto');
-
-// Encryption function with string salt
+// Encryption function using salt as the key
 function encrypt(text, salt) {
   const algorithm = 'aes-256-cbc';
-  const key = crypto.randomBytes(32);  // 32 bytes key for aes-256-cbc
-  const iv = crypto.randomBytes(16);   // 16 bytes IV
-
-  // Combine salt with the text
-  const saltedText = salt + text;
+  const key = crypto.createHash('sha256').update(salt).digest(); // Derive key from salt
+  const iv = Buffer.alloc(16, 0); // Use a fixed IV (not secure, but simple for this use case)
 
   const cipher = crypto.createCipheriv(algorithm, key, iv);
-  let encrypted = cipher.update(saltedText, 'utf8', 'hex');
+  let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
 
-  return {
-    iv: iv.toString('hex'),
-    encryptedData: encrypted,
-    key: key.toString('hex'),
-    salt: salt
-  };
+  return encrypted;
 }
 
-// Decryption function with string salt
-function decrypt(encryptedData, key, iv, salt) {
+// Decryption function with string salt as the key
+function decrypt(encryptedText, salt) {
   const algorithm = 'aes-256-cbc';
+  const key = crypto.createHash('sha256').update(salt).digest(); // Derive key from salt
+  const iv = Buffer.alloc(16, 0); // Use the same fixed IV as in encryption
 
-  const decipher = crypto.createDecipheriv(algorithm, Buffer.from(key, 'hex'), Buffer.from(iv, 'hex'));
-  let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+  const decipher = crypto.createDecipheriv(algorithm, key, iv);
+  let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
 
-  // Remove the salt from the beginning of the decrypted text
-  const originalText = decrypted.slice(salt.length);
-
-  return originalText;
+  return decrypted;
 }
 
 module.exports = {
@@ -303,6 +368,6 @@ module.exports = {
   createUser,
   login,
   createUserByGoogle,
-  editUser,
+  updateUser,
   deleteUser
 }

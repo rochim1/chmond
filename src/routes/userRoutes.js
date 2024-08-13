@@ -3,17 +3,21 @@ const app = express();
 const userController = require('../controllers/userController');
 
 const userValidator = require('../validations/userValidator');
+const loginValidator = require('../validations/loginValidator');
 // const router = express.Router();
 
 const apiRouter = express.Router();
 apiRouter.get('/users', userController.getAllUsers);
 
+// apiRouter.post('/users/log_access', userController.logUserAccess); // Create a new user
 
 // User Routes
-apiRouter.post('/users/create', userValidator, userController.createUser); // Create a new user
+apiRouter.post('/login', loginValidator, userController.login); // Login user
 apiRouter.post('/auth/google', userController.createUserByGoogle); // Authenticate with Google
-apiRouter.post('/login', userController.login); // Login user
-apiRouter.put('/users/:id_user', userController.editUser); // Edit user
+
+apiRouter.post('/users/create', userValidator, userController.createUser); // Create a new user
+apiRouter.put('/users/update/:id_user', userController.updateUser); // Update a new user
+apiRouter.post('/users/delete', userController.deleteUser); // Update a new user
 apiRouter.delete('/users/:id_user', userController.deleteUser); // Delete user
 
 app.use('/api', apiRouter);
