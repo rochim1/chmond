@@ -8,7 +8,7 @@ const User = sequelize.define('User', {
     primaryKey: true,
   },
   email: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(100),
     allowNull: false,
     unique: true, // This ensures the email must be unique
     validate: {
@@ -20,12 +20,12 @@ const User = sequelize.define('User', {
     allowNull: false
   },
   username: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(25),
     unique: true,
     allowNull: true,
   },
   name: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(50),
     allowNull: true,
   },
   birthdate: {
@@ -37,7 +37,7 @@ const User = sequelize.define('User', {
     allowNull: true,
   },
   phone: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(16),
     allowNull: true,
   },
   gender: {
@@ -50,20 +50,28 @@ const User = sequelize.define('User', {
     defaultValue: true,
   },
   last_education: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(50),
     allowNull: true,
   },
   stay_with: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(100),
     allowNull: true,
   },
   job: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(100),
     allowNull: true,
   },
   status: {
     type: DataTypes.ENUM('active', 'deleted'),
     defaultValue: 'active',
+    allowNull: true,
+  },
+  body_weight: {
+    type: DataTypes.STRING(10),
+    allowNull: true,
+  },
+  body_height: {
+    type: DataTypes.STRING(10),
     allowNull: true,
   }
 });

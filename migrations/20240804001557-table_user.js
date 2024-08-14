@@ -24,11 +24,11 @@ module.exports = {
         allowNull: false,
       },
       username: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(25),
         allowNull: true,
       },
       name: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(50),
         allowNull: true,
       },
       birthdate: {
@@ -40,7 +40,7 @@ module.exports = {
         allowNull: true,
       },
       phone: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(16),
         allowNull: true,
       },
       gender: {
@@ -53,15 +53,23 @@ module.exports = {
         defaultValue: true,
       },
       last_education: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(50),
         allowNull: true,
       },
       stay_with: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(100),
         allowNull: true,
       },
       job: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(100),
+        allowNull: true,
+      },
+      body_weight: {
+        type: Sequelize.STRING(10),
+        allowNull: true,
+      },
+      body_height: {
+        type: Sequelize.STRING(10),
         allowNull: true,
       },
       createdAt: {

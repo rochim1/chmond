@@ -16,11 +16,11 @@ apiRouter.post('/auth/google', userController.createUserByGoogle); // Authentica
 
 apiRouter.get('/users', userController.getAllUsers);
 apiRouter.post('/users/log_access', authMiddleware, userController.logUserAccess); // Create a new user
-apiRouter.get('/users', userController.getAllUsers); // View all user
-apiRouter.get('/users/:id_user', userController.getOneUsers); // View user
-apiRouter.post('/users/create', userValidator, userController.createUser); // Create a new user
-apiRouter.put('/users/update/:id_user', userController.updateUser); // Update a new user
-apiRouter.delete('/users/delete/:id_user', userController.deleteUser); // Delete user
+apiRouter.get('/users', authMiddleware, userController.getAllUsers); // View all user
+apiRouter.get('/users/:id_user',authMiddleware, userController.getOneUsers); // View user
+apiRouter.post('/users/create', authMiddleware, userValidator, userController.createUser); // Create a new user
+apiRouter.put('/users/update/:id_user', authMiddleware, userController.updateUser); // Update a new user
+apiRouter.delete('/users/delete/:id_user', authMiddleware, userController.deleteUser); // Delete user
 
 app.use('/api', apiRouter);
 

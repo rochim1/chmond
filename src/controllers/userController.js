@@ -137,6 +137,7 @@ const login = async (req, res) => {
     });
     if (!user) {
       return res.status(400).json({
+        success: false,
         message: 'Invalid email or password'
       });
     }
@@ -148,6 +149,7 @@ const login = async (req, res) => {
     }
     if (!isMatch) {
       return res.status(400).json({
+        success: false,
         message: 'Invalid email or password'
       });
     }
@@ -226,7 +228,9 @@ const createUser = async (req, res) => {
       marriage_status,
       last_education,
       stay_with,
-      job
+      job,
+      body_weight,
+      body_height
     } = req.body;
 
     // Check if user already exists
@@ -259,6 +263,8 @@ const createUser = async (req, res) => {
       last_education,
       stay_with,
       job,
+      body_weight,
+      body_height
     });
 
     // Respond with success

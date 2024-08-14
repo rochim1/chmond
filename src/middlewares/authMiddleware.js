@@ -33,7 +33,7 @@ const authMiddleware = async (req, res, next) => {
       return res.status(403).json({ 
         success: false,
         code: 'FORBIDDEN',
-        message: 'Forbidden: User not active or not found' 
+        message: 'Forbidden: User not found' 
     });
     }
 
