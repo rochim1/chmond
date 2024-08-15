@@ -1,6 +1,6 @@
-const UserService = require('../services/userService');
-const User = require('../models/userModel'); // Adjust the path to your models if needed
-const UserLogAccessModel = require('../models/userLogAccessModel'); // Adjust the path to your models if needed
+const UsersService = require('../services/userService');
+const Users = require('../models/userModel'); // Adjust the path to your models if needed
+const UsersLogAccessModel = require('../models/userLogAccessModel'); // Adjust the path to your models if needed
 const bcrypt = require('bcryptjs'); // For hashing passwords
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
@@ -29,7 +29,7 @@ const getOneUsers = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({
+    const Users = await User.findOne({
       where: {
         id_user,
         status: 'active'
@@ -71,7 +71,7 @@ const getAllUsers = async (req, res) => {
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const users = await User.findAndCountAll({
+    const Userss = await User.findAndCountAll({
       where: {
         status
       },
@@ -141,7 +141,7 @@ const login = async (req, res) => {
     }
 
     // Find user by email
-    const user = await User.findOne({
+    const Users = await User.findOne({
       where: {
         email,
         status: "active"
@@ -262,7 +262,7 @@ const createUser = async (req, res) => {
     let hashPassword = encrypt(password, process.env.SALT);
 
     // Create new user
-    const user = await User.create({
+    const Users = await User.create({
       email,
       password: hashPassword,
       username,
@@ -340,7 +340,7 @@ const updateUser = async (req, res) => {
     } = req.body;
 
     // Find the user by ID
-    const user = await User.findOne({
+    const Users = await User.findOne({
       where: {
         id_user,
         status: 'active'
@@ -399,7 +399,7 @@ const deleteUser = async (req, res) => {
     } = req.params;
 
     // Find and delete the user
-    const user = await User.findOne({
+    const Users = await User.findOne({
       where: {
         id_user,
         status: 'active'

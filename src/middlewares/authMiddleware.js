@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/userModel');
+const Users = require('../models/userModel');
 
 // Middleware function to check for valid JWT
 const authMiddleware = async (req, res, next) => {
@@ -21,7 +21,7 @@ const authMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Find user by ID and ensure their status is active
-    const user = await User.findOne({
+    const Users = await User.findOne({
       where: {
         id_user: decoded.id,
         status: 'active'

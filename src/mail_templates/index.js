@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const handlebars = require('handlebars');
 const { Op } = require('sequelize');
-const User = require('../models/userModel');
+const Users = require('../models/userModel');
 
 const blockedMails = [];
 
@@ -35,7 +35,7 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
             }
 
             // Fetch user by email and ensure email is verified
-            const user = await User.findOne({
+            const Users = await User.findOne({
                 where: {
                     email,
                     email_verified_at: {

@@ -2,7 +2,7 @@ const {
   check,
   validationResult
 } = require('express-validator');
-const User = require('../models/userModel');
+const Users = require('../models/userModel');
 // Validation rules for the fields
 const validateUser = [
   // require
@@ -11,7 +11,7 @@ const validateUser = [
   .notEmpty().withMessage('Email is required')
   .custom(async (value) => {
     // Check if the email already exists in the database
-    const user = await User.findOne({
+    const Users = await User.findOne({
       where: {
         email: value,
         // status: 'active'
@@ -31,7 +31,7 @@ const validateUser = [
       return true;
     }
     
-    const user = await User.findOne({
+    const Users = await User.findOne({
       where: {
         username: value,
         // status: 'active'
