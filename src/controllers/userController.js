@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs'); // For hashing passwords
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { sendEmailFunction } = require('../mail_templates/index');
+const User = require('../models/userModel');
 
 const {
   validationResult
@@ -29,7 +30,7 @@ const getOneUsers = async (req, res) => {
       });
     }
 
-    const Users = await User.findOne({
+    const user = await User.findOne({
       where: {
         id_user,
         status: 'active'
@@ -141,7 +142,7 @@ const login = async (req, res) => {
     }
 
     // Find user by email
-    const Users = await User.findOne({
+    const user = await User.findOne({
       where: {
         email,
         status: "active"
@@ -262,7 +263,7 @@ const createUser = async (req, res) => {
     let hashPassword = encrypt(password, process.env.SALT);
 
     // Create new user
-    const Users = await User.create({
+    const user = await User.create({
       email,
       password: hashPassword,
       username,
@@ -340,7 +341,7 @@ const updateUser = async (req, res) => {
     } = req.body;
 
     // Find the user by ID
-    const Users = await User.findOne({
+    const user = await User.findOne({
       where: {
         id_user,
         status: 'active'
@@ -399,7 +400,7 @@ const deleteUser = async (req, res) => {
     } = req.params;
 
     // Find and delete the user
-    const Users = await User.findOne({
+    const user = await User.findOne({
       where: {
         id_user,
         status: 'active'
@@ -448,7 +449,7 @@ const forgotPassword = async (req, res) => {
       );
 
       if (!emailResponse.success) {
-          return res.status(emailResponse.code ? emailResponse.code : 400).json(emailResponse);
+          return res.status(emailResponse.error && emailResponse.error.code ? emailResponse.error.code : 400).json(emailResponse);
       }
 
       return res.status(200).json({
@@ -464,6 +465,41 @@ const forgotPassword = async (req, res) => {
       });
   }
 };
+
+const verifyEmail = async (req, res) => {
+  try {
+    const userLogin = req.user;
+
+    // Update the user's email verification date
+    let updateUser = await User.update({
+      email_verify_at: new Date() // Mengisi dengan tanggal dan waktu saat ini
+    }, {
+      where: { id: userLogin.id_user } // Menentukan kondisi pembaruan berdasarkan ID pengguna
+    });
+
+    // Jika ada pembaruan yang terjadi (updateUser[0] > 0 berarti ada baris yang diperbarui)
+    if (updateUser[0] > 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Email verified successfully',
+        data: updateUser
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found or already verified',
+      });
+    }
+  } catch (error) {
+    console.error('Error verifying email:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'INTERNAL_SERVER_ERROR',
+      error: error.message,
+    });
+  }
+};
+
 
 
 // Encryption function using salt as the key
@@ -501,5 +537,6 @@ module.exports = {
   updateUser,
   deleteUser,
   getOneUsers,
-  forgotPassword
+  forgotPassword,
+  verifyEmail
 }

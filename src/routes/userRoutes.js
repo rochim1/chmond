@@ -15,6 +15,7 @@ apiRouter.post('/login', loginValidator, userController.login); // Login user
 apiRouter.post('/auth/google', userController.createUserByGoogle); // Authenticate with Google
 
 apiRouter.post('/auth/lupaPassword', userController.forgotPassword);
+apiRouter.post('/auth/verifyEmail', userController.forgotPassword);
 
 apiRouter.get('/users', userController.getAllUsers);
 apiRouter.post('/users/log_access', authMiddleware, userController.logUserAccess); // Create a new user

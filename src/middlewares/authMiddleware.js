@@ -21,7 +21,7 @@ const authMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Find user by ID and ensure their status is active
-    const Users = await User.findOne({
+    const user = await User.findOne({
       where: {
         id_user: decoded.id,
         status: 'active'

@@ -11,7 +11,7 @@ const validateUser = [
   .notEmpty().withMessage('Email is required')
   .custom(async (value) => {
     // Check if the email already exists in the database
-    const Users = await User.findOne({
+    const user = await User.findOne({
       where: {
         email: value,
         // status: 'active'
@@ -31,7 +31,7 @@ const validateUser = [
       return true;
     }
     
-    const Users = await User.findOne({
+    const user = await User.findOne({
       where: {
         username: value,
         // status: 'active'

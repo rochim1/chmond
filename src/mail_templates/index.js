@@ -3,7 +3,9 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 const handlebars = require('handlebars');
-const { Op } = require('sequelize');
+const {
+    Op
+} = require('sequelize');
 const Users = require('../models/userModel');
 
 const blockedMails = [];
@@ -28,14 +30,17 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
 
             if (!getMailOptions) {
                 return {
-                    code: 404,
                     success: false,
-                    message: 'Cannot send mail, template not found'
+                    error: {
+                        code: 404,
+                        message: 'Cannot send mail, template not found'
+                    },
+                    code: 'NOT_FOUND',
                 };
             }
 
             // Fetch user by email and ensure email is verified
-            const Users = await User.findOne({
+            const user = await User.findOne({
                 where: {
                     email,
                     email_verified_at: {
@@ -47,7 +52,11 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
             if (!user) {
                 return {
                     success: false,
-                    message: 'User not found or email not verified',
+                    error: {
+                        code: 404,
+                        message: 'User not found or email not verified',
+                    },
+                    code: 'NOT_FOUND',
                 };
             }
 
@@ -97,14 +106,21 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
         } else {
             return {
                 success: false,
-                message: 'Email template is blocked from sending',
+                error: {
+                    code: 403,
+                    message: 'Email template is blocked from sending',
+                },
+                code: 'FORBIDDEN',
             };
         }
     } catch (error) {
         return {
             success: false,
-            message: 'INTERNAL_SERVER_ERROR',
-            error: error.message,
+            code: 'INTERNAL_SERVER_ERROR',
+            error: {
+                code: 500,
+                message: error.message
+            },
         };
     }
 }
