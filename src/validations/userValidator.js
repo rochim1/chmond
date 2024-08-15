@@ -2,7 +2,7 @@ const {
   check,
   validationResult
 } = require('express-validator');
-const Users = require('../models/userModel');
+const User = require('../models/userModel');
 // Validation rules for the fields
 const validateUser = [
   // require

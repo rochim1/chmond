@@ -26,7 +26,9 @@ const getOneUsers = async (req, res) => {
       res.status(400).json({
         success: false,
         code: "BAD_REQUEST",
-        error: "can't get id_user"
+        error: {
+          message: "can't get id_user"
+        }
       });
     }
 
@@ -41,7 +43,9 @@ const getOneUsers = async (req, res) => {
       res.status(404).json({
         success: false,
         code: "NOT_FOUND",
-        error: 'user not found'
+        error: {
+          message: 'user not found'
+        }
       });
     }
 
@@ -52,8 +56,10 @@ const getOneUsers = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'INTERNAL_SERVER_ERROR',
-      error: error.message
+      code: 'INTERNAL_SERVER_ERROR',
+      error: {
+        message: error.message
+      }
     });
   }
 };
@@ -91,7 +97,9 @@ const getAllUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       code: 'INTERNAL_SERVER_ERROR',
-      error: error.message
+      error: {
+        message: error.message
+      }
     });
   }
 };
@@ -118,7 +126,9 @@ const logUserAccess = async (req, res) => {
     res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
-      error: error.message
+      error: {
+        message: error.message
+      }
     });
   }
 };
@@ -149,9 +159,12 @@ const login = async (req, res) => {
       }
     });
     if (!user) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        message: 'Invalid email or password'
+        code: 'NOT_FOUND',
+        error: {
+          message: 'user not found'
+        }
       });
     }
 
@@ -161,9 +174,12 @@ const login = async (req, res) => {
       isMatch = true;
     }
     if (!isMatch) {
-      return res.status(400).json({
+      return res.status(403).json({
         success: false,
-        message: 'Invalid email or password'
+        code: 'FORBIDDEN',
+        error: {
+          message: 'Invalid email or password'
+        }
       });
     }
 
@@ -209,8 +225,10 @@ const login = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'INTERNAL_SERVER_ERROR',
-      error: error.message
+      code: 'INTERNAL_SERVER_ERROR',
+      error: {
+        message: error.message
+      }
     });
   }
 };
@@ -224,7 +242,9 @@ const createUser = async (req, res) => {
       return res.status(400).json({
         success: false,
         code: 'BAD_REQUEST',
-        errors: errors.array()
+        error: {
+          message: errors.array()
+        }
       });
     }
 
@@ -292,7 +312,9 @@ const createUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'INTERNAL_SERVER_ERROR',
-      error: error.message
+      error: {
+        message: error.message
+      }
     });
   }
 };
@@ -306,7 +328,9 @@ const createUserByGoogle = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'INTERNAL_SERVER_ERROR',
-      error: error.message
+      error: {
+        message: error.message
+      }
     });
   }
 }
@@ -352,7 +376,9 @@ const updateUser = async (req, res) => {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
-        message: 'User not found'
+        error: {
+          message: 'User not found'
+        }
       });
     }
 
@@ -387,7 +413,9 @@ const updateUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'INTERNAL_SERVER_ERROR',
-      error: error.message
+      error: {
+        message: error.message
+      }
     });
   }
 };
@@ -411,7 +439,9 @@ const deleteUser = async (req, res) => {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
-        message: 'User not found'
+        error: {
+          message: 'User not found'
+        }
       });
     }
 
@@ -431,7 +461,9 @@ const deleteUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'INTERNAL_SERVER_ERROR',
-      error: error.message
+      error: {
+        message: error.message
+      }
     });
   }
 };
@@ -461,7 +493,9 @@ const forgotPassword = async (req, res) => {
       return res.status(500).json({
           success: false,
           message: 'INTERNAL_SERVER_ERROR',
-          error: error.message,
+          error: {
+            message: error.message
+          },
       });
   }
 };
@@ -487,15 +521,20 @@ const verifyEmail = async (req, res) => {
     } else {
       return res.status(404).json({
         success: false,
-        message: 'User not found or already verified',
+        code: 'NOT_FOUND',
+        error: {
+          message: 'User not found or already verified'
+        },
       });
     }
   } catch (error) {
     console.error('Error verifying email:', error);
     return res.status(500).json({
       success: false,
-      message: 'INTERNAL_SERVER_ERROR',
-      error: error.message,
+      code: 'INTERNAL_SERVER_ERROR',
+      error: {
+        message: error.message
+      },
     });
   }
 };

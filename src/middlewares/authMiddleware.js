@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const Users = require('../models/userModel');
+const User = require('../models/userModel');
 
 // Middleware function to check for valid JWT
 const authMiddleware = async (req, res, next) => {
@@ -7,10 +7,13 @@ const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ 
-        success: false,
-        code: 'UNAUTHORIZED',
-        message: 'Unauthorized: No token provided' });
+    return res.status(401).json({
+      success: false,
+      code: 'UNAUTHORIZED',
+      error: {
+        message: 'Unauthorized: No token provided'
+      }
+    });
   }
 
   // Extract the token
@@ -19,7 +22,7 @@ const authMiddleware = async (req, res, next) => {
   try {
     // Verify the token using the secret key
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Find user by ID and ensure their status is active
     const user = await User.findOne({
       where: {
@@ -30,21 +33,29 @@ const authMiddleware = async (req, res, next) => {
 
     // If user is not found or status is not active, reject the request
     if (!user) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
         code: 'FORBIDDEN',
-        message: 'Forbidden: User not found' 
-    });
+        error: {
+          message: 'Forbidden: User not found'
+        }
+      });
     }
 
     // Attach user data to request object
-    req.user = user;  // Attach user object to request
+    req.user = user; // Attach user object to request
 
     // Proceed to the next middleware or route handler
     next();
   } catch (err) {
     // Handle errors (e.g., invalid token)
-    res.status(401).json({ message: 'Unauthorized: Invalid token' });
+    res.status(401).json({
+      success: false,
+      code: 'UNAUTHORIZE',
+      error: {
+        message: 'Unauthorized: Invalid token'
+      }
+    });
   }
 };
 
