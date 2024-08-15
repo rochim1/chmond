@@ -70,7 +70,6 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
                 username: user.name,
             };
             const emailTemplate = template(replacements);
-
             // Create transporter for sending email
             const transporter = nodemailer.createTransport({
                 service: 'gmail',

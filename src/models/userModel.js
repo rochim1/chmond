@@ -73,6 +73,10 @@ const User = sequelize.define('User', {
   body_height: {
     type: DataTypes.STRING(10),
     allowNull: true,
+  },
+  email_verified_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
   }
 });
 
