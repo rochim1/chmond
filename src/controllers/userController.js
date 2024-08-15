@@ -504,19 +504,28 @@ const verifyEmail = async (req, res) => {
   try {
     const userLogin = req.user;
 
-    // Update the user's email verification date
-    let updateUser = await User.update({
-      email_verify_at: new Date() // Mengisi dengan tanggal dan waktu saat ini
-    }, {
-      where: { id: userLogin.id_user } // Menentukan kondisi pembaruan berdasarkan ID pengguna
-    });
+    // Ensure the user is authenticated and `id_user` is present
+    if (!userLogin || !userLogin.id_user) {
+      return res.status(400).json({
+        success: false,
+        code: 'BAD_REQUEST',
+        error: {
+          message: 'User ID is missing or user not authenticated'
+        },
+      });
+    }
 
-    // Jika ada pembaruan yang terjadi (updateUser[0] > 0 berarti ada baris yang diperbarui)
+    // Update the user's email verification date
+    const updateUser = await User.update(
+      { email_verified_at: new Date() }, // Fields to update
+      { where: { id_user: userLogin.id_user } } // Condition to find the record
+    );
+
+    // Check if any rows were updated (updateUser[0] > 0)
     if (updateUser[0] > 0) {
       return res.status(200).json({
         success: true,
         message: 'Email verified successfully',
-        data: updateUser
       });
     } else {
       return res.status(404).json({
@@ -533,11 +542,12 @@ const verifyEmail = async (req, res) => {
       success: false,
       code: 'INTERNAL_SERVER_ERROR',
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
 };
+
 
 
 
