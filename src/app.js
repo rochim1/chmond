@@ -11,6 +11,7 @@ app.use(express.json());
 //     next();
 // });
 
-app.use('/api', userRoutes);
+app.use('/api', userRoutes.apiRouter);
+app.use(userRoutes.api);
 
 module.exports = app;

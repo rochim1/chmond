@@ -1,11 +1,12 @@
 const UsersService = require('../services/userService');
-const Users = require('../models/userModel'); // Adjust the path to your models if needed
-const UsersLogAccessModel = require('../models/userLogAccessModel'); // Adjust the path to your models if needed
+const User = require('../models/userModel'); // Adjust the path to your models if needed
+const UserLogAccessModel = require('../models/userLogAccessModel'); // Adjust the path to your models if needed
 const bcrypt = require('bcryptjs'); // For hashing passwords
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const { sendEmailFunction } = require('../mail_templates/index');
-const User = require('../models/userModel');
+const {
+  sendEmailFunction
+} = require('../mail_templates/index');
 
 const {
   validationResult
@@ -74,11 +75,11 @@ const getAllUsers = async (req, res) => {
     } = req.body && req.body.filter ? req.body.filter : {
       status: 'active'
     };
-    console.log(status)
+
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const Userss = await User.findAndCountAll({
+    const users = await User.findAndCountAll({
       where: {
         status
       },
@@ -97,35 +98,6 @@ const getAllUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       code: 'INTERNAL_SERVER_ERROR',
-      error: {
-        message: error.message
-      }
-    });
-  }
-};
-
-const logUserAccess = async (req, res) => {
-  try {
-    const {
-      id_user,
-      datetime,
-      access_via
-    } = req.body;
-    let userAccess = await UserLogAccessModel.create({
-      id_user,
-      datetime,
-      access_via
-    })
-
-    return res.status(200).json({
-      success: true,
-      data: userAccess
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      code: "INTERNAL_SERVER_ERROR",
       error: {
         message: error.message
       }
@@ -300,6 +272,16 @@ const createUser = async (req, res) => {
       body_height
     });
 
+    // Call sendEmailFunction
+    const emailResponse = await sendEmailFunction(
+      email,
+      'verify_email', {}, // params are dynamically added inside the function
+      'ind' // or 'eng' for English template
+    );
+
+    if (!emailResponse.success) {
+      return res.status(emailResponse.error && emailResponse.error.code ? emailResponse.error.code : 400).json(emailResponse);
+    }
     // Respond with success
     res.status(201).json({
       success: true,
@@ -468,41 +450,74 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const logUserAccess = async (req, res) => {
+  try {
+    const {
+      id_user,
+      datetime,
+      access_via
+    } = req.body;
+    let userAccess = await UserLogAccessModel.create({
+      id_user,
+      datetime,
+      access_via
+    })
+
+    return res.status(200).json({
+      success: true,
+      data: userAccess
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      code: "INTERNAL_SERVER_ERROR",
+      error: {
+        message: error.message
+      }
+    });
+  }
+};
+
 const forgotPassword = async (req, res) => {
   try {
-      const { email } = req.body;
+    const {
+      email
+    } = req.body;
 
-      // Call sendEmailFunction
-      const emailResponse = await sendEmailFunction(
-          email, 
-          'forgot_password', 
-          {}, // params are dynamically added inside the function
-          'ind' // or 'eng' for English template
-      );
+    // Call sendEmailFunction
+    const emailResponse = await sendEmailFunction(
+      email,
+      'forgot_password', {}, // params are dynamically added inside the function
+      'ind' // or 'eng' for English template
+    );
 
-      if (!emailResponse.success) {
-          return res.status(emailResponse.error && emailResponse.error.code ? emailResponse.error.code : 400).json(emailResponse);
-      }
+    if (!emailResponse.success) {
+      return res.status(emailResponse.error && emailResponse.error.code ? emailResponse.error.code : 400).json(emailResponse);
+    }
 
-      return res.status(200).json({
-          success: true,
-          message: 'Password reset email sent successfully',
-      });
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset email sent successfully',
+    });
   } catch (error) {
-      console.error('Error sending forgot password email:', error);
-      return res.status(500).json({
-          success: false,
-          message: 'INTERNAL_SERVER_ERROR',
-          error: {
-            message: error.message
-          },
-      });
+    console.error('Error sending forgot password email:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'INTERNAL_SERVER_ERROR',
+      error: {
+        message: error.message
+      },
+    });
   }
 };
 
 const verifyEmail = async (req, res) => {
   try {
-    const userLogin = req.user;
+
+    const {
+      token
+    } = req.params; // User ID from the URL
 
     // Ensure the user is authenticated and `id_user` is present
     if (!userLogin || !userLogin.id_user) {
@@ -516,9 +531,14 @@ const verifyEmail = async (req, res) => {
     }
 
     // Update the user's email verification date
-    const updateUser = await User.update(
-      { email_verified_at: new Date() }, // Fields to update
-      { where: { id_user: userLogin.id_user } } // Condition to find the record
+    const updateUser = await User.update({
+        email_verified_at: new Date()
+      }, // Fields to update
+      {
+        where: {
+          id_user: userLogin.id_user
+        }
+      } // Condition to find the record
     );
 
     // Check if any rows were updated (updateUser[0] > 0)
@@ -547,6 +567,74 @@ const verifyEmail = async (req, res) => {
     });
   }
 };
+
+const verifyProcess = async (req, res) => {
+  const token = req.params.token;
+  
+  if (!token) {
+    return res.status(400).send({
+      success: false,
+      code: 'BAD_REQUEST',
+      error: {
+        message: 'Token tidak tersedia'
+      }
+    });
+  }
+
+  try {
+    // Verify the JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Find the user by email
+    const user = await User.findOne({
+      where: {
+        email: decoded.email
+      }
+    });
+
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        code: 'NOT_FOUND',
+        error: {
+          message: 'Pengguna tidak ditemukan'
+        }
+      });
+    }
+
+    // Check if the user is already verified
+    if (user.email_verified_at) {
+      return res.status(403).send({
+        success: false,
+        code: 'FORBIDDEN',
+        error: {
+          message: 'Email sudah diverifikasi sebelumnya'
+        }
+      });
+    }
+
+    // Mark the user as verified
+    user.email_verified_at = new Date();
+    await user.save(); // Save the changes to the database
+
+    return res.status(200).send({
+      success: true,
+      error: {
+        message: 'Email berhasil diverifikasi. Terima kasih!'
+      }
+    });
+  } catch (error) {
+    // Handle invalid token or other errors
+    return res.status(403).send({
+      success: false,
+      code: 'FORBIDDEN',
+      error: {
+        message: 'Token tidak valid atau telah kadaluarsa'
+      }
+    });
+  }
+};
+
 
 
 
@@ -587,5 +675,6 @@ module.exports = {
   deleteUser,
   getOneUsers,
   forgotPassword,
-  verifyEmail
+  verifyEmail,
+  verifyProcess
 }

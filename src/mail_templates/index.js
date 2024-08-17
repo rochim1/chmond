@@ -6,22 +6,36 @@ const handlebars = require('handlebars');
 const {
     Op
 } = require('sequelize');
-const Users = require('../models/userModel');
+const User = require('../models/userModel');
+const jwt = require('jsonwebtoken');
 
 const blockedMails = [];
 
 const mailOptions = [{
-    template_name: 'forgot_password',
-    require_params: {
-        resetLink: 'link',
-        username: 'name'
+        template_name: 'forgot_password',
+        require_params: {
+            resetLink: 'link',
+            username: 'name'
+        },
+        from: process.env.EMAIL,
+        receiver_role: ['user', 'admin'],
+        to: '', // User email will be dynamically set
+        subject: 'Password Reset',
+        html: '../mail_templates/forgotPassword/'
     },
-    from: process.env.EMAIL,
-    receiver_role: ['user', 'admin'],
-    to: '', // User email will be dynamically set
-    subject: 'Password Reset',
-    html: '../mail_templates/forgotPassword/'
-}];
+    {
+        template_name: 'verify_email',
+        require_params: {
+            name: 'name',
+            verificationLink: 'link'
+        },
+        from: process.env.EMAIL,
+        receiver_role: ['user'],
+        to: '', // User email will be dynamically set
+        subject: 'verifikasi email',
+        html: '../mail_templates/emailVerification/'
+    }
+];
 
 async function sendEmailFunction(email, template_name, params, lang = 'ind') {
     try {
@@ -39,46 +53,16 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
                 };
             }
 
-            // Fetch user by email and ensure email is verified
-            const user = await User.findOne({
-                where: {
-                    email,
-                    email_verified_at: {
-                        [Op.ne]: null,
-                    },
-                },
-            });
-
-            if (!user) {
-                return {
-                    success: false,
-                    error: {
-                        code: 404,
-                        message: 'User not found or email not verified',
-                    },
-                    code: 'NOT_FOUND',
-                };
+            let emailTemplate, user;
+            if (template_name == 'forgot_password') {
+                const template = await sendEmailForgotPassword(getMailOptions, email, params, lang);
+                emailTemplate = template.emailTemplate
+                user = template.user
+            } else if (template_name == 'verify_email') {
+                const template = await sendEmailVerification(getMailOptions, email,params, lang);
+                emailTemplate = template.emailTemplate
+                user = template.user
             }
-
-            // Generate token and save to the user document
-            const token = crypto.randomBytes(32).toString('hex');
-            user.resetPasswordToken = token;
-            user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
-            await user.save();
-
-            // Construct template path and read HTML content
-            const templatePath = path.join(__dirname, `${getMailOptions.html}${lang === 'ind' ? 'ind.html' : 'eng.html'}`);
-            const htmlSource = fs.readFileSync(templatePath, 'utf-8');
-            const template = handlebars.compile(htmlSource);
-
-            // Replace placeholders with actual data
-            const resetLink = `http://${process.env.HOST}/reset/${token}`;
-            const replacements = {
-                ...params,
-                resetLink,
-                username: user.name,
-            };
-            const emailTemplate = template(replacements);
             // Create transporter for sending email
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
@@ -123,6 +107,101 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
             },
         };
     }
+}
+
+async function sendEmailForgotPassword(getMailOptions, email, params, lang) {
+    // Fetch user by email and ensure email is verified
+    const user = await User.findOne({
+        where: {
+            email,
+            status: 'active',
+            email_verified_at: {
+                [Op.ne]: null,
+            },
+        },
+    });
+
+    if (!user) {
+        return {
+            success: false,
+            error: {
+                code: 404,
+                message: 'User not found or email not verified',
+            },
+            code: 'NOT_FOUND',
+        };
+    }
+
+    // Generate token and save to the user document
+    const token = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
+    await user.save();
+
+    // Construct template path and read HTML content
+    const templatePath = path.join(__dirname, `${getMailOptions.html}${lang === 'ind' ? 'ind.html' : 'eng.html'}`);
+    const htmlSource = fs.readFileSync(templatePath, 'utf-8');
+    const template = handlebars.compile(htmlSource);
+
+    // Replace placeholders with actual data
+    const resetLink = `http://${process.env.HOST}/reset/${token}`;
+    const replacements = {
+        ...params,
+        resetLink,
+        username: user.name,
+    };
+
+    const emailTemplate = template(replacements);
+    return {
+        emailTemplate,
+        user
+    };
+}
+
+async function sendEmailVerification(getMailOptions, email, params, lang) {
+    // Fetch user by email and ensure email is verified
+    const user = await User.findOne({
+        where: {
+            email,
+            status: 'active'
+        },
+    });
+
+    if (!user) {
+        return {
+            success: false,
+            error: {
+                code: 404,
+                message: 'User not found or email not verified',
+            },
+            code: 'NOT_FOUND',
+        };
+    }
+
+    // Generate token and save to the user document
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+        expiresIn: '1h'
+    });
+
+    const verificationLink = `${process.env.HOST}/verify_email/${token}`;
+
+    // Construct template path and read HTML content
+    const templatePath = path.join(__dirname, `${getMailOptions.html}${lang === 'ind' ? 'ind.html' : 'eng.html'}`);
+    const htmlSource = fs.readFileSync(templatePath, 'utf-8');
+    const template = handlebars.compile(htmlSource);
+
+    // Replace placeholders with actual data
+    const replacements = {
+        ...params,
+        verificationLink : verificationLink,
+        name: user.name,
+    };
+
+    const emailTemplate = template(replacements);
+    return {
+        emailTemplate,
+        user
+    };
 }
 
 module.exports = {

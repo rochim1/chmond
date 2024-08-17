@@ -33,11 +33,11 @@ const authMiddleware = async (req, res, next) => {
 
     // If user is not found or status is not active, reject the request
     if (!user) {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
-        code: 'FORBIDDEN',
+        code: 'UNAUTHORIZE',
         error: {
-          message: 'Forbidden: User not found'
+          message: 'Unauthorized: User not found'
         }
       });
     }

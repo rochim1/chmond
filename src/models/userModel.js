@@ -74,6 +74,15 @@ const Users = sequelize.define('Users', {
     type: DataTypes.STRING(10),
     allowNull: true,
   },
+  resetPasswordToken: {
+    type: DataTypes.STRING(150),
+    allowNull: true,
+  },
+  role: {
+    type: DataTypes.ENUM('user', 'admin'),
+    defaultValue: 'user',
+    allowNull: true,
+  },
   email_verified_at: {
     type: DataTypes.DATE,
     allowNull: true,
