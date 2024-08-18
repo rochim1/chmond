@@ -48,6 +48,10 @@ const Diagnose = sequelize.define('Diagnose', {
     defaultValue: 'active',
     allowNull: true,
   },
+  deleted_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  }
 });
 
 module.exports = Diagnose;

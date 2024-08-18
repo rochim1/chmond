@@ -32,10 +32,10 @@ apiRouter.delete('/users/delete/:id_user', authMiddleware, userController.delete
 
 // Diagnose Route
 // apiRouter.get('/diagnose', diagnoseController.getAlldiagnose);
-// apiRouter.get('/diagnose', authMiddleware, diagnoseController.getAlldiagnose); // View all user
-// apiRouter.get('/diagnose/:id_user',authMiddleware, diagnoseController.getOnediagnose); // View user
+apiRouter.get('/diagnose', authMiddleware, diagnoseController.getAllDiagnoses); // View all user
+apiRouter.get('/diagnose/:id_diagnose',authMiddleware, diagnoseController.getOneDiagnose); // View user
 apiRouter.post('/diagnose/create', authMiddleware, diagnoseValidator, diagnoseController.createDiagnose); // Create a new user
-// apiRouter.put('/diagnose/update/:id_user', authMiddleware, diagnoseController.updateDiagnose); // Update a new user
-// apiRouter.delete('/diagnose/delete/:id_user', authMiddleware, diagnoseController.deleteDiagnose); // Delete user
+apiRouter.put('/diagnose/update/:id_diagnose', authMiddleware, diagnoseValidator, diagnoseController.updateDiagnose); // Update a new user
+apiRouter.delete('/diagnose/delete/:id_diagnose', authMiddleware, diagnoseController.deleteDiagnose); // Delete user
 
 module.exports =  { apiRouter, api };

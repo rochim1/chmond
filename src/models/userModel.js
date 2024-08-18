@@ -86,6 +86,10 @@ const Users = sequelize.define('Users', {
   email_verified_at: {
     type: DataTypes.DATE,
     allowNull: true,
+  },
+  deleted_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
   }
 });
 
