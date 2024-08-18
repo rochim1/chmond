@@ -9,7 +9,7 @@ const Side_effects = sequelize.define('Side_effects', {
   },
   effect_name: {
     type: DataTypes.STRING(200),
-    allowNull: true,
+    allowNull: false,
   },
   effect_detail: {
     type: DataTypes.TEXT,
@@ -20,6 +20,10 @@ const Side_effects = sequelize.define('Side_effects', {
     defaultValue: 'active',
     allowNull: true,
   },
+  deleted_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  }
 });
 
 module.exports = Side_effects;
