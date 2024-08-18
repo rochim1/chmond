@@ -272,16 +272,16 @@ const createUser = async (req, res) => {
       body_height
     });
 
-    // Call sendEmailFunction
-    const emailResponse = await sendEmailFunction(
+    // Call sendEmailFunction, make run in background
+    const emailResponse = sendEmailFunction(
       email,
       'verify_email', {}, // params are dynamically added inside the function
       'ind' // or 'eng' for English template
     );
 
-    if (!emailResponse.success) {
-      return res.status(emailResponse.error && emailResponse.error.code ? emailResponse.error.code : 400).json(emailResponse);
-    }
+    // if (!emailResponse.success) {
+    //   return res.status(emailResponse.error && emailResponse.error.code ? emailResponse.error.code : 400).json(emailResponse);
+    // }
     // Respond with success
     res.status(201).json({
       success: true,

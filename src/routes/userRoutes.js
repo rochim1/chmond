@@ -1,9 +1,11 @@
 const express = require('express');
 const app = express();
 const userController = require('../controllers/userController');
+const diagnoseController = require('../controllers/diagnoseController');
 // validator
 const userValidator = require('../validations/userValidator');
 const loginValidator = require('../validations/loginValidator');
+const diagnoseValidator = require('../validations/diagnoseValidator');
 
 // middleware
 const authMiddleware = require('../middlewares/authMiddleware')
@@ -24,8 +26,16 @@ apiRouter.post('/users/log_access', authMiddleware, userController.logUserAccess
 apiRouter.get('/users', userController.getAllUsers);
 apiRouter.get('/users', authMiddleware, userController.getAllUsers); // View all user
 apiRouter.get('/users/:id_user',authMiddleware, userController.getOneUsers); // View user
-apiRouter.post('/users/create', userValidator, userController.createUser); // Create a new user
+apiRouter.post('/users/create', authMiddleware, userValidator, userController.createUser); // Create a new user
 apiRouter.put('/users/update/:id_user', authMiddleware, userController.updateUser); // Update a new user
 apiRouter.delete('/users/delete/:id_user', authMiddleware, userController.deleteUser); // Delete user
+
+// Diagnose Route
+// apiRouter.get('/diagnose', diagnoseController.getAlldiagnose);
+// apiRouter.get('/diagnose', authMiddleware, diagnoseController.getAlldiagnose); // View all user
+// apiRouter.get('/diagnose/:id_user',authMiddleware, diagnoseController.getOnediagnose); // View user
+apiRouter.post('/diagnose/create', authMiddleware, diagnoseValidator, diagnoseController.createDiagnose); // Create a new user
+// apiRouter.put('/diagnose/update/:id_user', authMiddleware, diagnoseController.updateDiagnose); // Update a new user
+// apiRouter.delete('/diagnose/delete/:id_user', authMiddleware, diagnoseController.deleteDiagnose); // Delete user
 
 module.exports =  { apiRouter, api };

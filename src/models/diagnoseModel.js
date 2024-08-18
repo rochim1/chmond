@@ -16,7 +16,11 @@ const Diagnose = sequelize.define('Diagnose', {
     allowNull: true,
   },
   siklus: {
-    type: DataTypes.STRING(20),
+    type: DataTypes.STRING(200),
+    allowNull: true,
+  },
+  period: {
+    type: DataTypes.STRING(100),
     allowNull: true,
   },
   diagnose_date: {
