@@ -3,14 +3,17 @@ const app = express();
 const userController = require('../controllers/userController');
 const diagnoseController = require('../controllers/diagnoseController');
 const sideEffectController = require('../controllers/sideEffectController');
+const educationController = require('../controllers/educationController');
 // validator
 const userValidator = require('../validations/userValidator');
 const loginValidator = require('../validations/loginValidator');
 const diagnoseValidator = require('../validations/diagnoseValidator');
 const sideEffectValidator = require('../validations/sideEfectValidator');
+const educationValidator = require('../validations/educationValidator');
 
 // middleware
 const authMiddleware = require('../middlewares/authMiddleware')
+const uploadMiddleware = require('../middlewares/uploadMiddleware')
 
 const apiRouter = express.Router();
 const api = express.Router();
@@ -45,5 +48,12 @@ apiRouter.get('/side_effect/:id_diagnose',authMiddleware, sideEffectController.g
 apiRouter.post('/side_effect/create', authMiddleware, sideEffectValidator, sideEffectController.createSideEffect); // Create a new user
 apiRouter.put('/side_effect/update/:id_diagnose', authMiddleware, sideEffectValidator, sideEffectController.updateSideEffect); // Update a new user
 apiRouter.delete('/side_effect/delete/:id_diagnose', authMiddleware, sideEffectController.deleteSideEffect); // Delete user
+
+// Education Route
+apiRouter.get('/education', authMiddleware, sideEffectController.getAllSideEffects); // View all user
+apiRouter.get('/education/:id_diagnose',authMiddleware, sideEffectController.getOneSideEffect); // View user
+apiRouter.post('/education/create', authMiddleware, sideEffectValidator, sideEffectController.createSideEffect); // Create a new user
+apiRouter.put('/education/update/:id_diagnose', authMiddleware, sideEffectValidator, sideEffectController.updateSideEffect); // Update a new user
+apiRouter.delete('/education/delete/:id_diagnose', authMiddleware, sideEffectController.deleteSideEffect); // Delete user
 
 module.exports =  { apiRouter, api };

@@ -19,7 +19,7 @@ const Educations = sequelize.define('Educations', {
     type: DataTypes.STRING(150),
     allowNull: true,
   },
-  thumbnail_link: {
+  thumbnail: { // foto
     type: DataTypes.STRING(150),
     allowNull: true,
   },
