@@ -2,6 +2,7 @@ const {
   body
 } = require('express-validator');
 const Educations = require('../models/educationModel'); // Import the Educations model
+const uuidValidate = require('uuid-validate');
 
 const educationValidatorCreate = [
   body('title')
@@ -34,6 +35,18 @@ const educationValidatorCreate = [
     max: 150
   }).withMessage('Video link can be at most 150 characters long'),
 
+  body('id_side_effects')
+  .optional()
+  .isArray().withMessage('id_side_effects must be an array')
+  .custom((value) => {
+    if (value.length === 0) {
+      throw new Error('At least one id_side_effect is required');
+    }
+    if (!value.every(id => uuidValidate(id))) {
+      throw new Error('Each id_side_effect must be a valid UUID');
+    }
+    return true;
+  }),
   // Thumbnail is handled by multer, so no need to validate it here
   // Multer will manage file types and sizes.
 ];
@@ -57,6 +70,18 @@ const educationValidatorUpdate = [
     max: 150
   }).withMessage('Video link can be at most 150 characters long'),
 
+  body('id_side_effects')
+  .optional()
+  .isArray().withMessage('id_side_effects must be an array')
+  .custom((value) => {
+    if (value.length === 0) {
+      throw new Error('At least one id_side_effect is required');
+    }
+    if (!value.every(id => uuidValidate(id))) {
+      throw new Error('Each id_side_effect must be a valid UUID');
+    }
+    return true;
+  }),
   // Thumbnail is handled by multer, so no need to validate it here
   // Multer will manage file types and sizes.
 ];

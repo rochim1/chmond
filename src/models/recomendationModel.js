@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Diagnose = sequelize.define('Diagnose', {
+const Recomendation = sequelize.define('Recomendation', {
   id_rekomendasi: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -18,8 +18,8 @@ const Diagnose = sequelize.define('Diagnose', {
   id_education: {
     type: DataTypes.UUID,
     references: {
-      model: 'Diagnose', // Name of the User model (can be adjusted if it's different)
-      key: 'id_diagnose', // The primary key of the User model
+      model: 'Educations', // Name of the User model (can be adjusted if it's different)
+      key: 'id_education', // The primary key of the User model
     },
     allowNull: false,
   },
@@ -34,4 +34,4 @@ const Diagnose = sequelize.define('Diagnose', {
   }
 });
 
-module.exports = Diagnose;
+module.exports = Recomendation;
