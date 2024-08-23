@@ -28,6 +28,9 @@ const Educations = sequelize.define('Educations', {
     defaultValue: 'active',
     allowNull: true,
   },
+},
+{
+  timestamps: true,  // Automatically manages createdAt and updatedAt
 });
 
 module.exports = Educations;

@@ -364,7 +364,7 @@ const deleteEducation = async (req, res) => {
 
         // Update related recommendations to 'deleted'
         await Recomendation.update(
-            { status: 'deleted', deleted_at: new Date() },
+            { status: 'deleted', deletedAt: new Date() },
             { where: { id_education, status: 'active' } }
         );
 

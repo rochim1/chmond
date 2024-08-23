@@ -20,10 +20,13 @@ const Side_effects = sequelize.define('Side_effects', {
     defaultValue: 'active',
     allowNull: true,
   },
-  deleted_at: {
+  deletedAt: {
     type: DataTypes.DATE,
     allowNull: true,
   }
+},
+{
+  timestamps: true,  // Automatically manages createdAt and updatedAt
 });
 
 module.exports = Side_effects;

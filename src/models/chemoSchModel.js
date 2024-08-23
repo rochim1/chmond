@@ -1,38 +1,30 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Diagnose = sequelize.define('Diagnose', {
-  id_diagnose: {
+const ChemoSchedule = sequelize.define('Chemo_schedule', {
+  id_chemoSchedule: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-  diagnose: {
+  tujuan_kemoterapi: {
+    type: DataTypes.STRING(150),
+    allowNull: false,
+  },
+  tanggal_kemoterapi: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+  },
+  waktu_kemoterapi: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+  },
+  remember_before_minutes: {  // Fixed typo in the field name
     type: DataTypes.STRING(50),
     allowNull: true,
   },
-  stage: {
-    type: DataTypes.STRING(20),
-    allowNull: true,
-  },
-  siklus: {
-    type: DataTypes.STRING(200),
-    allowNull: true,
-  },
-  period: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-  },
-  diagnose_date: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
-  kemo_start_date: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
-  responsible_doctor: {
-    type: DataTypes.STRING(70),
+  notes: {
+    type: DataTypes.STRING,
     allowNull: true,
   },
   id_user: {
@@ -46,15 +38,13 @@ const Diagnose = sequelize.define('Diagnose', {
   status: {
     type: DataTypes.ENUM('active', 'deleted'),
     defaultValue: 'active',
-    allowNull: true,
   },
   deletedAt: {
     type: DataTypes.DATE,
     allowNull: true,
-  }
-},
-{
+  },
+}, {
   timestamps: true,  // Automatically manages createdAt and updatedAt
 });
 
-module.exports = Diagnose;
+module.exports = ChemoSchedule;

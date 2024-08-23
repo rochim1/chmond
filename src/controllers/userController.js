@@ -429,7 +429,7 @@ const deleteUser = async (req, res) => {
 
     await user.update({
       status: 'deleted',
-      deleted_at: new Date()
+      deletedAt: new Date()
     });
 
     // Respond with a success message

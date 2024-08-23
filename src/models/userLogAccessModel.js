@@ -23,6 +23,9 @@ const user_log_access = sequelize.define('user_log_access', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+},
+{
+  timestamps: true,  // Automatically manages createdAt and updatedAt
 });
 
 module.exports = user_log_access;

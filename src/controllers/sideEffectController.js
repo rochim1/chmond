@@ -198,7 +198,7 @@ const deleteSideEffect = async (req, res) => {
 
     await sideEffect.update({
       status: 'deleted',
-      deleted_at: new Date(),
+      deletedAt: new Date(),
     });
 
     return res.status(200).json({

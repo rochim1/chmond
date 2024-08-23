@@ -4,6 +4,7 @@ const userController = require('../controllers/userController');
 const diagnoseController = require('../controllers/diagnoseController');
 const sideEffectController = require('../controllers/sideEffectController');
 const educationController = require('../controllers/educationController');
+const chemoSchController = require('../controllers/chemoSchController');
 // validator
 const userValidator = require('../validations/userValidator');
 const loginValidator = require('../validations/loginValidator');
@@ -13,10 +14,12 @@ const {
     educationValidatorCreate,
     educationValidatorUpdate
 } = require('../validations/educationValidator');
+const chemoSchValidator = require('../validations/chemoSchValidator');
 
 // middleware
 const authMiddleware = require('../middlewares/authMiddleware')
-const uploadMiddleware = require('../middlewares/uploadMiddleware')
+const uploadMiddleware = require('../middlewares/uploadMiddleware');
+
 
 const apiRouter = express.Router();
 const api = express.Router();
@@ -34,7 +37,7 @@ apiRouter.post('/users/log_access', authMiddleware, userController.logUserAccess
 // User Route
 apiRouter.get('/users', authMiddleware, userController.getAllUsers); // View all user
 apiRouter.get('/users/:id_user', authMiddleware, userController.getOneUsers); // View user
-apiRouter.post('/users/create', authMiddleware, userValidator, userController.createUser); // Create a new user
+apiRouter.post('/users/create', userValidator, userController.createUser); // Create a new user
 apiRouter.put('/users/update/:id_user', authMiddleware, userController.updateUser); // Update a new user
 apiRouter.delete('/users/delete/:id_user', authMiddleware, userController.deleteUser); // Delete user
 
@@ -58,6 +61,13 @@ apiRouter.get('/education/:id_education', authMiddleware, educationController.ge
 apiRouter.post('/education/create', authMiddleware, uploadMiddleware.single('thumbnail'), educationValidatorCreate, educationController.createEducation); // Create a new user
 apiRouter.put('/education/update/:id_education', authMiddleware, uploadMiddleware.single('thumbnail'), educationValidatorUpdate, educationController.updateEducation); // Update a new user
 apiRouter.delete('/education/delete/:id_education', authMiddleware, educationController.deleteEducation); // Delete user
+
+// Chemo Schedule Route
+apiRouter.get('/chemo', authMiddleware, chemoSchController.getAllChemoSchedules); // View all user
+apiRouter.get('/chemo/:id_chemoSchedule', authMiddleware, chemoSchController.getOneChemoSchedule); // View user
+apiRouter.post('/chemo/create', authMiddleware, chemoSchValidator, chemoSchController.createChemoSchedule); // Create a new user
+apiRouter.put('/chemo/update/:id_chemoSchedule', authMiddleware, chemoSchValidator, chemoSchController.updateChemoSchedule); // Update a new user
+apiRouter.delete('/chemo/delete/:id_chemoSchedule', authMiddleware, chemoSchController.deleteChemoSchedule); // Delete user
 
 module.exports = {
     apiRouter,

@@ -28,10 +28,13 @@ const Recomendation = sequelize.define('Recomendation', {
     defaultValue: 'active',
     allowNull: true,
   },
-  deleted_at: {
+  deletedAt: {
     type: DataTypes.DATE,
     allowNull: true,
   }
+},
+{
+  timestamps: true,  // Automatically manages createdAt and updatedAt
 });
 
 module.exports = Recomendation;

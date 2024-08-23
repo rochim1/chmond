@@ -119,7 +119,7 @@ const createDiagnose = async (req, res) => {
     }
 
     // Extract user data from request
-    const {
+    let {
       diagnose,
       stage,
       siklus,
@@ -130,6 +130,10 @@ const createDiagnose = async (req, res) => {
       id_user,
     } = req.body;
 
+    if (!id_user) {
+      id_user = req.user.id_user;
+    }
+    
     // Create new user
     const createDiagnose = await Diagnose.create({
       diagnose,
@@ -258,10 +262,10 @@ const deleteDiagnose = async (req, res) => {
       });
     }
 
-    // Perform soft delete (set status to 'deleted' and set deleted_at to current date)
+    // Perform soft delete (set status to 'deleted' and set deletedAt to current date)
     const deletedDiagnose = await diagnoseToDelete.update({
       status: 'deleted',
-      deleted_at: new Date()
+      deletedAt: new Date()
     });
 
     // Respond with success
