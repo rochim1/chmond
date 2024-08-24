@@ -5,6 +5,8 @@ const diagnoseController = require('../controllers/diagnoseController');
 const sideEffectController = require('../controllers/sideEffectController');
 const educationController = require('../controllers/educationController');
 const chemoSchController = require('../controllers/chemoSchController');
+const userSideEffectController = require('../controllers/userSideEffectController');
+
 // validator
 const userValidator = require('../validations/userValidator');
 const loginValidator = require('../validations/loginValidator');
@@ -15,6 +17,7 @@ const {
     educationValidatorUpdate
 } = require('../validations/educationValidator');
 const chemoSchValidator = require('../validations/chemoSchValidator');
+const userSideEffectValidator = require('../validations/userSideEffectValidator');
 
 // middleware
 const authMiddleware = require('../middlewares/authMiddleware')
@@ -68,6 +71,13 @@ apiRouter.get('/chemo/:id_chemoSchedule', authMiddleware, chemoSchController.get
 apiRouter.post('/chemo/create', authMiddleware, chemoSchValidator, chemoSchController.createChemoSchedule); // Create a new user
 apiRouter.put('/chemo/update/:id_chemoSchedule', authMiddleware, chemoSchValidator, chemoSchController.updateChemoSchedule); // Update a new user
 apiRouter.delete('/chemo/delete/:id_chemoSchedule', authMiddleware, chemoSchController.deleteChemoSchedule); // Delete user
+
+// ser Side Effect Route
+apiRouter.get('/user_side_effect', authMiddleware, userSideEffectController.getAllUserSideEffects); // View all user
+apiRouter.get('/user_side_effect/:id_user_side_effect', authMiddleware, userSideEffectController.getOneUserSideEffect); // View user
+apiRouter.post('/user_side_effect/create', authMiddleware, userSideEffectValidator, userSideEffectController.createUserSideEffect); // Create a new user
+apiRouter.put('/user_side_effect/update/:id_user_side_effect', authMiddleware, userSideEffectValidator, userSideEffectController.updateUserSideEffect); // Update a new user
+apiRouter.delete('/user_side_effect/delete/:id_user_side_effect', authMiddleware, userSideEffectController.deleteUserSideEffect); // Delete user
 
 module.exports = {
     apiRouter,
