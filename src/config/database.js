@@ -5,6 +5,12 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   port: process.env.DB_PORT,
   dialect: 'mysql', // or 'postgres', 'sqlite', 'mssql'
   // logging: false,
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000, // Connection timeout (30 seconds)
+    idle: 10000
+  }
 });
 
 module.exports = sequelize;
