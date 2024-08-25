@@ -1,5 +1,5 @@
 const { validationResult } = require("express-validator");
-const User_side_effects = require("../models/userSideEffectsModel");
+const UserSideEffects = require("../models/userSideEffectsModel");
 const Recomendation = require("../models/recomendationModel");
 
 const createUserSideEffect = async (req, res) => {
@@ -30,7 +30,7 @@ const createUserSideEffect = async (req, res) => {
       id_user = req.user.id_user;
     }
 
-    const newUserSideEffect = await User_side_effects.create({
+    const newUserSideEffect = await UserSideEffects.create({
       id_side_effect,
       id_user,
       date_feel,
@@ -43,7 +43,6 @@ const createUserSideEffect = async (req, res) => {
       status,
     });
 
-    // create also recomendation article
     return res.status(201).json({
       success: true,
       message: "User Side Effect created successfully",
@@ -89,7 +88,7 @@ const updateUserSideEffect = async (req, res) => {
       id_user = req.user.id_user;
     }
 
-    const userSideEffect = await User_side_effects.findOne({
+    const userSideEffect = await UserSideEffects.findOne({
       where: {
         id_user_side_effect,
         status: "active",
@@ -139,7 +138,8 @@ const deleteUserSideEffect = async (req, res) => {
   try {
     const { id_user_side_effect } = req.params;
 
-    const userSideEffect = await User_side_effects.findOne({
+    // get user side effect first
+    const userSideEffect = await UserSideEffects.findOne({
       where: {
         id_user_side_effect,
         status: "active",
@@ -155,11 +155,16 @@ const deleteUserSideEffect = async (req, res) => {
         },
       });
     }
-
+    
     await userSideEffect.update({
       status: "deleted",
     });
 
+    const deleteRecomendation = await Recomendation.update({
+      id_side_effect: userSideEffect.id_side_effect,
+      status: "active",
+    });
+    
     // delete also rekomendasi artikel
 
     return res.status(200).json({
@@ -181,7 +186,7 @@ const getOneUserSideEffect = async (req, res) => {
   try {
     const { id_user_side_effect } = req.params;
 
-    const userSideEffect = await User_side_effects.findOne({
+    const userSideEffect = await UserSideEffects.findOne({
       where: {
         id_user_side_effect,
         status: "active",
@@ -231,7 +236,7 @@ const getAllUserSideEffects = async (req, res) => {
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const { count, rows } = await User_side_effects.findAndCountAll({
+    const { count, rows } = await UserSideEffects.findAndCountAll({
       where: whereClause,
       offset,
       limit,
