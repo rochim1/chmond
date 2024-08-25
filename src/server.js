@@ -17,6 +17,7 @@ sequelize.authenticate()
     // if (process.env.environment == 'development' || process.env.environment !== 'production') {
     //   return sequelize.sync();
     // }
+    return 0;
   })
   .then(() => {
     app.listen(PORT, () => {
