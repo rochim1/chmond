@@ -1,0 +1,5 @@
+---
+deployment:
+tasks:
+- export DEPLOYPATH=/home/kuif3654/public_html/chmond
+- /bin/cp -r * $DEPLOYPATH
