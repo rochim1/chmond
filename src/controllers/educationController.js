@@ -140,17 +140,28 @@ const getOneEducation = async (req, res) => {
 const getAllEducations = async (req, res) => {
   try {
     const { page = 1, pageSize = 10 } = req.body;
-    const { status } = req.body.filter || {
+    const { status, tipe } = req.body.filter || {
       status: "active",
     };
+
+    let EducationWhereClause = {
+      status
+    };
+    if (tipe) {
+      if (tipe == "video_only") {
+        EducationWhereClause.video_link = { [Op.ne]: null };
+      } else if (tipe == "article_only") {
+        EducationWhereClause.video_link = { [Op.eq]: null };
+      } else {
+        EducationWhereClause = { ...EducationWhereClause };
+      }
+    }
 
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
     const educations = await Educations.findAndCountAll({
-      where: {
-        status,
-      },
+      where: EducationWhereClause,
       offset,
       limit,
     });

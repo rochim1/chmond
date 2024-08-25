@@ -22,17 +22,11 @@ const getRecomendation = async (req, res) => {
     let EducationWhereClause = {};
     if (tipe) {
       if (tipe == "video_only") {
-        EducationWhereClause = {
-          ...EducationWhereClause,
-          video_link: { [Op.ne]: null },
-        };
+        EducationWhereClause.video_link = { [Op.ne]: null };
       } else if (tipe == "article_only") {
-        EducationWhereClause = {
-          ...EducationWhereClause,
-          video_link: { [Op.eq]: null },
-        };
+        EducationWhereClause.video_link = { [Op.eq]: null };
       } else {
-        EducationWhereClause = {};
+        EducationWhereClause = { ...EducationWhereClause };
       }
     }
 
