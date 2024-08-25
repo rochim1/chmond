@@ -3,6 +3,7 @@ const Educations = require("../models/educationModel");
 const Recomendation = require("../models/recomendationModel");
 const fs = require("fs");
 const path = require("path");
+const { Op } = require("sequelize");
 
 // Create Education
 const createEducation = async (req, res) => {
