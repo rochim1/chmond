@@ -14,7 +14,10 @@ const PORT = process.env.PORT || 3000;
 sequelize.authenticate()
   .then(() => {
     console.log('Database connected...');
-    return sequelize.sync();
+    if (process.env.environment == 'development') {
+      return sequelize.sync();
+    }
+
   })
   .then(() => {
     app.listen(PORT, () => {
