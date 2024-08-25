@@ -1,7 +1,5 @@
-const {
-  validationResult
-} = require('express-validator');
-const SideEffect = require('../models/sideEffectsModel');
+const { validationResult } = require("express-validator");
+const SideEffect = require("../models/sideEffectsModel");
 
 // Create Side Effect
 const createSideEffect = async (req, res) => {
@@ -10,15 +8,12 @@ const createSideEffect = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        code: 'BAD_REQUEST',
+        code: "BAD_REQUEST",
         error: errors.array(),
       });
     }
 
-    const {
-      effect_name,
-      effect_detail
-    } = req.body;
+    const { effect_name, effect_detail } = req.body;
 
     const newSideEffect = await SideEffect.create({
       effect_name,
@@ -27,15 +22,15 @@ const createSideEffect = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Side effect created successfully',
+      message: "Side effect created successfully",
       data: newSideEffect,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -44,23 +39,21 @@ const createSideEffect = async (req, res) => {
 // Get One Side Effect
 const getOneSideEffect = async (req, res) => {
   try {
-    const {
-      id_side_effect
-    } = req.params;
+    const { id_side_effect } = req.params;
 
     const sideEffect = await SideEffect.findOne({
       where: {
         id_side_effect,
-        status: 'active',
+        status: "active",
       },
     });
 
     if (!sideEffect) {
       return res.status(404).json({
         success: false,
-        code: 'NOT_FOUND',
+        code: "NOT_FOUND",
         error: {
-          message: 'Side effect not found'
+          message: "Side effect not found",
         },
       });
     }
@@ -72,9 +65,9 @@ const getOneSideEffect = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -83,13 +76,9 @@ const getOneSideEffect = async (req, res) => {
 // Get All Side Effects with Pagination
 const getAllSideEffects = async (req, res) => {
   try {
-    const {
-      page = 1, pageSize = 10
-    } = req.body;
-    const {
-      status
-    } = req.body.filter || {
-      status: 'active'
+    const { page = 1, pageSize = 10 } = req.body;
+    const { status } = req.body.filter || {
+      status: "active",
     };
 
     const offset = (page - 1) * pageSize;
@@ -97,7 +86,7 @@ const getAllSideEffects = async (req, res) => {
 
     const sideEffects = await SideEffect.findAndCountAll({
       where: {
-        status
+        status,
       },
       offset,
       limit,
@@ -113,9 +102,9 @@ const getAllSideEffects = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -124,15 +113,13 @@ const getAllSideEffects = async (req, res) => {
 // Update Side Effect
 const updateSideEffect = async (req, res) => {
   try {
-    const {
-      id_side_effect
-    } = req.params;
+    const { id_side_effect } = req.params;
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        code: 'BAD_REQUEST',
+        code: "BAD_REQUEST",
         error: errors.array(),
       });
     }
@@ -140,16 +127,16 @@ const updateSideEffect = async (req, res) => {
     const sideEffect = await SideEffect.findOne({
       where: {
         id_side_effect,
-        status: 'active',
+        status: "active",
       },
     });
 
     if (!sideEffect) {
       return res.status(404).json({
         success: false,
-        code: 'NOT_FOUND',
+        code: "NOT_FOUND",
         error: {
-          message: 'Side effect not found'
+          message: "Side effect not found",
         },
       });
     }
@@ -158,15 +145,15 @@ const updateSideEffect = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Side effect updated successfully',
+      message: "Side effect updated successfully",
       data: updatedSideEffect,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -175,42 +162,40 @@ const updateSideEffect = async (req, res) => {
 // Soft Delete Side Effect
 const deleteSideEffect = async (req, res) => {
   try {
-    const {
-      id_side_effect
-    } = req.params;
+    const { id_side_effect } = req.params;
 
     const sideEffect = await SideEffect.findOne({
       where: {
         id_side_effect,
-        status: 'active',
+        status: "active",
       },
     });
 
     if (!sideEffect) {
       return res.status(404).json({
         success: false,
-        code: 'NOT_FOUND',
+        code: "NOT_FOUND",
         error: {
-          message: 'Side effect not found'
+          message: "Side effect not found",
         },
       });
     }
 
     await sideEffect.update({
-      status: 'deleted',
+      status: "deleted",
       deletedAt: new Date(),
     });
 
     return res.status(200).json({
       success: true,
-      message: 'Side effect soft-deleted successfully',
+      message: "Side effect soft-deleted successfully",
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -222,4 +207,4 @@ module.exports = {
   getAllSideEffects,
   updateSideEffect,
   deleteSideEffect,
-}
+};

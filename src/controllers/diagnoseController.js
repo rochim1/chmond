@@ -71,7 +71,7 @@ const getAllDiagnoses = async (req, res) => {
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const whereClause = {
+    let whereClause = {
       status,
       ...(id_user && { id_user }) // Add id_user to the filter if it exists
     };

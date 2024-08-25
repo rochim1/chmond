@@ -1,6 +1,6 @@
-const { validationResult } = require('express-validator');
-const User_side_effects = require('../models/userSideEffectsModel');
-const Recomendation = require('../models/recomendationModel');
+const { validationResult } = require("express-validator");
+const User_side_effects = require("../models/userSideEffectsModel");
+const Recomendation = require("../models/recomendationModel");
 
 const createUserSideEffect = async (req, res) => {
   try {
@@ -8,7 +8,7 @@ const createUserSideEffect = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        code: 'BAD_REQUEST',
+        code: "BAD_REQUEST",
         error: errors.array(),
       });
     }
@@ -23,7 +23,7 @@ const createUserSideEffect = async (req, res) => {
       frekuensi,
       distress,
       note,
-      status
+      status,
     } = req.body;
 
     if (!id_user) {
@@ -46,15 +46,15 @@ const createUserSideEffect = async (req, res) => {
     // create also recomendation article
     return res.status(201).json({
       success: true,
-      message: 'User Side Effect created successfully',
+      message: "User Side Effect created successfully",
       data: newUserSideEffect,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -66,14 +66,12 @@ const updateUserSideEffect = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        code: 'BAD_REQUEST',
+        code: "BAD_REQUEST",
         error: errors.array(),
       });
     }
 
-    const {
-      id_user_side_effect
-    } = req.params;
+    const { id_user_side_effect } = req.params;
     const {
       id_side_effect,
       id_user,
@@ -84,7 +82,7 @@ const updateUserSideEffect = async (req, res) => {
       frekuensi,
       distress,
       note,
-      status
+      status,
     } = req.body;
 
     if (!id_user) {
@@ -94,16 +92,16 @@ const updateUserSideEffect = async (req, res) => {
     const userSideEffect = await User_side_effects.findOne({
       where: {
         id_user_side_effect,
-        status: 'active'
-      }
+        status: "active",
+      },
     });
-    
+
     if (!userSideEffect) {
       return res.status(404).json({
         success: false,
-        code: 'NOT_FOUND',
+        code: "NOT_FOUND",
         error: {
-          message: 'User Side Effect not found'
+          message: "User Side Effect not found",
         },
       });
     }
@@ -123,15 +121,15 @@ const updateUserSideEffect = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'User Side Effect updated successfully',
+      message: "User Side Effect updated successfully",
       data: userSideEffect,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -139,43 +137,41 @@ const updateUserSideEffect = async (req, res) => {
 
 const deleteUserSideEffect = async (req, res) => {
   try {
-    const {
-      id_user_side_effect
-    } = req.params;
+    const { id_user_side_effect } = req.params;
 
     const userSideEffect = await User_side_effects.findOne({
       where: {
         id_user_side_effect,
-        status: 'active'
-      }
+        status: "active",
+      },
     });
 
     if (!userSideEffect) {
       return res.status(404).json({
         success: false,
-        code: 'NOT_FOUND',
+        code: "NOT_FOUND",
         error: {
-          message: 'User Side Effect not found'
+          message: "User Side Effect not found",
         },
       });
     }
 
     await userSideEffect.update({
-      status: 'deleted'
+      status: "deleted",
     });
 
-    // delete also rekomendasi artikel 
+    // delete also rekomendasi artikel
 
     return res.status(200).json({
       success: true,
-      message: 'User Side Effect soft-deleted successfully',
+      message: "User Side Effect soft-deleted successfully",
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -183,23 +179,21 @@ const deleteUserSideEffect = async (req, res) => {
 
 const getOneUserSideEffect = async (req, res) => {
   try {
-    const {
-      id_user_side_effect
-    } = req.params;
+    const { id_user_side_effect } = req.params;
 
     const userSideEffect = await User_side_effects.findOne({
       where: {
         id_user_side_effect,
-        status: 'active'
+        status: "active",
       },
     });
 
     if (!userSideEffect) {
       return res.status(404).json({
         success: false,
-        code: 'NOT_FOUND',
+        code: "NOT_FOUND",
         error: {
-          message: 'User Side Effect not found'
+          message: "User Side Effect not found",
         },
       });
     }
@@ -211,9 +205,9 @@ const getOneUserSideEffect = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -221,27 +215,23 @@ const getOneUserSideEffect = async (req, res) => {
 
 const getAllUserSideEffects = async (req, res) => {
   try {
-    const {
-      page = 1, pageSize = 10
-    } = req.body;
-    const {
-      status, id_user
-    } = req.body && req.body.filter ? req.body.filter : {
-      status: 'active'
-    };
+    const { page = 1, pageSize = 10 } = req.body;
+    const { status, id_user } =
+      req.body && req.body.filter
+        ? req.body.filter
+        : {
+            status: "active",
+          };
 
-    const whereClause = {
+    let whereClause = {
       status,
-      ...(id_user && { id_user }) // Add id_user to the filter if it exists
+      ...(id_user && { id_user }), // Add id_user to the filter if it exists
     };
 
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const {
-      count,
-      rows
-    } = await User_side_effects.findAndCountAll({
+    const { count, rows } = await User_side_effects.findAndCountAll({
       where: whereClause,
       offset,
       limit,
@@ -257,9 +247,9 @@ const getAllUserSideEffects = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      code: 'INTERNAL_SERVER_ERROR',
+      code: "INTERNAL_SERVER_ERROR",
       error: {
-        message: error.message
+        message: error.message,
       },
     });
   }
@@ -270,5 +260,5 @@ module.exports = {
   updateUserSideEffect,
   deleteUserSideEffect,
   getOneUserSideEffect,
-  getAllUserSideEffects
-}
+  getAllUserSideEffects,
+};
