@@ -6,6 +6,7 @@ const sideEffectController = require('../controllers/sideEffectController');
 const educationController = require('../controllers/educationController');
 const chemoSchController = require('../controllers/chemoSchController');
 const userSideEffectController = require('../controllers/userSideEffectController');
+const recomendationController = require('../controllers/recomendationController');
 
 // validator
 const userValidator = require('../validations/userValidator');
@@ -22,6 +23,7 @@ const userSideEffectValidator = require('../validations/userSideEffectValidator'
 // middleware
 const authMiddleware = require('../middlewares/authMiddleware')
 const uploadMiddleware = require('../middlewares/uploadMiddleware');
+
 
 
 const apiRouter = express.Router();
@@ -64,6 +66,8 @@ apiRouter.get('/education/:id_education', authMiddleware, educationController.ge
 apiRouter.post('/education/create', authMiddleware, uploadMiddleware.single('thumbnail'), educationValidatorCreate, educationController.createEducation); // Create a new user
 apiRouter.put('/education/update/:id_education', authMiddleware, uploadMiddleware.single('thumbnail'), educationValidatorUpdate, educationController.updateEducation); // Update a new user
 apiRouter.delete('/education/delete/:id_education', authMiddleware, educationController.deleteEducation); // Delete user
+
+apiRouter.get('/recomendation', authMiddleware, recomendationController.getRecomendation);
 
 // Chemo Schedule Route
 apiRouter.get('/chemo', authMiddleware, chemoSchController.getAllChemoSchedules); // View all user

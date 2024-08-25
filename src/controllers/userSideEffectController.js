@@ -1,7 +1,6 @@
-const {
-  validationResult
-} = require('express-validator');
+const { validationResult } = require('express-validator');
 const User_side_effects = require('../models/userSideEffectsModel');
+const Recomendation = require('../models/recomendationModel');
 
 const createUserSideEffect = async (req, res) => {
   try {
@@ -45,7 +44,6 @@ const createUserSideEffect = async (req, res) => {
     });
 
     // create also recomendation article
-
     return res.status(201).json({
       success: true,
       message: 'User Side Effect created successfully',

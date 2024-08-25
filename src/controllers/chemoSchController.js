@@ -240,15 +240,10 @@ const getOneChemoSchedule = async (req, res) => {
 
 const getAllChemoSchedules = async (req, res) => {
     try {
-        const {
-            page = 1, pageSize = 10
-        } = req.body;
-        const {
-            status
-          } = req.body && req.body.filter ? req.body.filter : {
-            status: 'active'
-          };
+        const { page = 1, pageSize = 10 } = req.body;
+        let { status, id_user } = req.body && req.body.filter ? req.body.filter : { status: 'active' };
 
+        // todo
         const offset = (page - 1) * pageSize;
         const limit = parseInt(pageSize);
 
@@ -256,9 +251,7 @@ const getAllChemoSchedules = async (req, res) => {
             count,
             rows
         } = await ChemoSchedule.findAndCountAll({
-            where: {
-                status
-            },
+            where: { status },
             offset,
             limit
         });

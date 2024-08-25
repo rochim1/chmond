@@ -19,7 +19,7 @@ const Educations = sequelize.define('Educations', {
     type: DataTypes.STRING(150),
     allowNull: true,
   },
-  thumbnail: { // foto
+  thumbnail: {
     type: DataTypes.STRING(150),
     allowNull: true,
   },
@@ -28,9 +28,8 @@ const Educations = sequelize.define('Educations', {
     defaultValue: 'active',
     allowNull: true,
   },
-},
-{
-  timestamps: true,  // Automatically manages createdAt and updatedAt
+}, {
+  timestamps: true,
 });
 
 module.exports = Educations;
