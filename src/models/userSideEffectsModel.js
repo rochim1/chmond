@@ -1,5 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const Side_effects = require('./sideEffectsModel')
+const User = require('./userModel');
 
 const User_side_effects = sequelize.define('user_side_effects', {
   id_user_side_effect: {
@@ -10,7 +12,7 @@ const User_side_effects = sequelize.define('user_side_effects', {
   id_side_effect: {
     type: DataTypes.UUID,
     references: {
-      model: 'side_effects',
+      model: Side_effects,
       key: 'id_side_effect',
     },
     allowNull: false,
@@ -18,7 +20,7 @@ const User_side_effects = sequelize.define('user_side_effects', {
   id_user: {
     type: DataTypes.UUID,
     references: {
-      model: 'users', // Name of the User model (can be adjusted if it's different)
+      model: User, // Name of the User model (can be adjusted if it's different)
       key: 'id_user', // The primary key of the User model
     },
     allowNull: false,

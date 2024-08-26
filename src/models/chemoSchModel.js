@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const User = require('./userModel');
 
 const ChemoSchedule = sequelize.define('Chemo_schedule', {
   id_chemoSchedule: {
@@ -30,7 +31,7 @@ const ChemoSchedule = sequelize.define('Chemo_schedule', {
   id_user: {
     type: DataTypes.UUID,
     references: {
-      model: 'users', // Name of the User model (can be adjusted if it's different)
+      model: User, // Name of the User model (can be adjusted if it's different)
       key: 'id_user', // The primary key of the User model
     },
     allowNull: false,
