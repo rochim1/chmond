@@ -93,7 +93,8 @@ const Users = sequelize.define('Users', {
   }
 },
 {
-  timestamps: true,  // Automatically manages createdAt and updatedAt
+  timestamps: true,
+  tableName: 'users'
 });
 
 module.exports = Users;

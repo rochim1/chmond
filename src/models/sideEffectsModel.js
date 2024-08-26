@@ -26,7 +26,8 @@ const Side_effects = sequelize.define('Side_effects', {
   }
 },
 {
-  timestamps: true,  // Automatically manages createdAt and updatedAt
+  timestamps: true,
+  tableName: 'side_effects'
 });
 
 module.exports = Side_effects;

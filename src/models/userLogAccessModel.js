@@ -26,7 +26,8 @@ const user_log_access = sequelize.define('user_log_access', {
   },
 },
 {
-  timestamps: true,  // Automatically manages createdAt and updatedAt
+  timestamps: true,
+  tableName: 'user_log_accesses'
 });
 
 module.exports = user_log_access;

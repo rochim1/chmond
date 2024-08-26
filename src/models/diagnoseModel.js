@@ -55,7 +55,8 @@ const Diagnose = sequelize.define('Diagnose', {
   }
 },
 {
-  timestamps: true,  // Automatically manages createdAt and updatedAt
+  timestamps: true,
+  tableName: 'diagnoses'
 });
 
 module.exports = Diagnose;

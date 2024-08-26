@@ -30,6 +30,7 @@ const Educations = sequelize.define('Educations', {
   },
 }, {
   timestamps: true,
+  tableName: 'educations'
 });
 
 module.exports = Educations;

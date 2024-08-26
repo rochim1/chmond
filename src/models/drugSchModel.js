@@ -45,7 +45,8 @@ const DrugSchedule = sequelize.define('Drug_schedule', {
     allowNull: true,
   },
 }, {
-  timestamps: true,  // Automatically manages createdAt and updatedAt
+  timestamps: true,
+  tableName: 'drug_schedules'
 });
 
 module.exports = DrugSchedule;

@@ -26,6 +26,7 @@ const Recomendation = sequelize.define('Recomendation', {
   }
 }, {
   timestamps: true,
+  tableName: 'recomendations'
 });
 
 module.exports = Recomendation;

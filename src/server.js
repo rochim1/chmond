@@ -20,7 +20,6 @@ sequelize.authenticate()
       await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
       return result;
       // }
-    return 0;
   })
   .then(() => {
     app.listen(PORT, () => {
