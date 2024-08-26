@@ -39,8 +39,8 @@ const Diagnose = sequelize.define('Diagnose', {
   id_user: {
     type: DataTypes.UUID,
     references: {
-      model: User, // Name of the User model (can be adjusted if it's different)
-      key: 'id_user', // The primary key of the User model
+      model: User,
+      key: 'id_user',
     },
     allowNull: false,
   },
