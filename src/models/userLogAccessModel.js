@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const User = require('./user');  // Import the User model
 
 const user_log_access = sequelize.define('user_log_access', {
   id_log: {
@@ -10,8 +11,8 @@ const user_log_access = sequelize.define('user_log_access', {
   id_user: {
     type: DataTypes.UUID,
     references: {
-      model: 'users', // Name of the User model (can be adjusted if it's different)
-      key: 'id_user', // The primary key of the User model
+      model: User,
+      key: 'id_user',
     },
     allowNull: false,
   },
