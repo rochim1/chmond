@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Side_effects = sequelize.define('Side_effects', {
+const Side_effects = sequelize.define('side_effects', {
   id_side_effect: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -27,7 +27,7 @@ const Side_effects = sequelize.define('Side_effects', {
 },
 {
   timestamps: true,
-  tableName: 'side_effects'
+  // tableName: 'side_effects'
 });
 
 module.exports = Side_effects;

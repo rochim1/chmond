@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Recomendation = sequelize.define('Recomendation', {
+const Recomendation = sequelize.define('recomendations', {
   id_rekomendasi: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -26,7 +26,7 @@ const Recomendation = sequelize.define('Recomendation', {
   }
 }, {
   timestamps: true,
-  tableName: 'recomendations'
+  // tableName: 'recomendations'
 });
 
 module.exports = Recomendation;

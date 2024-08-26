@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const User = require('./userModel');  // Import the User model
 
-const user_log_access = sequelize.define('user_log_access', {
+const user_log_access = sequelize.define('user_log_accesses', {
   id_log: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -27,7 +27,7 @@ const user_log_access = sequelize.define('user_log_access', {
 },
 {
   timestamps: true,
-  tableName: 'user_log_accesses'
+  // tableName: 'user_log_accesses'
 });
 
 module.exports = user_log_access;

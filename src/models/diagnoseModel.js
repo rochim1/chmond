@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const User = require('./userModel');  // Import the User model
 
-const Diagnose = sequelize.define('Diagnose', {
+const Diagnose = sequelize.define('diagnoses', {
   id_diagnose: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -56,7 +56,7 @@ const Diagnose = sequelize.define('Diagnose', {
 },
 {
   timestamps: true,
-  tableName: 'diagnoses'
+  // tableName: 'diagnoses'
 });
 
 module.exports = Diagnose;

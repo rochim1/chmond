@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const User = require('./userModel');
 
-const ChemoSchedule = sequelize.define('Chemo_schedule', {
+const ChemoSchedule = sequelize.define('chemo_schedules', {
   id_chemoSchedule: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -46,7 +46,7 @@ const ChemoSchedule = sequelize.define('Chemo_schedule', {
   },
 }, {
   timestamps: true,
-  tableName: 'chemo_schedules'
+  // tableName: 'chemo_schedules'
 });
 
 module.exports = ChemoSchedule;
