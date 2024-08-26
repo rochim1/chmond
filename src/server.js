@@ -15,7 +15,7 @@ sequelize.authenticate()
   .then(() => {
     console.log('Database connected...');
     // if (process.env.environment == 'development' || process.env.environment !== 'production') {
-    //   return sequelize.sync();
+      return sequelize.sync();
     // }
     return 0;
   })
