@@ -7,6 +7,7 @@ const educationController = require('../controllers/educationController');
 const chemoSchController = require('../controllers/chemoSchController');
 const userSideEffectController = require('../controllers/userSideEffectController');
 const recomendationController = require('../controllers/recomendationController');
+const monitoringLabController = require('../controllers/monitoringLabController');
 
 // validator
 const userValidator = require('../validations/userValidator');
@@ -19,6 +20,7 @@ const {
 } = require('../validations/educationValidator');
 const chemoSchValidator = require('../validations/chemoSchValidator');
 const userSideEffectValidator = require('../validations/userSideEffectValidator');
+const monitoringLabValidator = require('../validations/monitoringLabValidator')
 
 // middleware
 const authMiddleware = require('../middlewares/authMiddleware')
@@ -76,12 +78,19 @@ apiRouter.post('/chemo/create', authMiddleware, chemoSchValidator, chemoSchContr
 apiRouter.put('/chemo/update/:id_chemoSchedule', authMiddleware, chemoSchValidator, chemoSchController.updateChemoSchedule); // Update a new user
 apiRouter.delete('/chemo/delete/:id_chemoSchedule', authMiddleware, chemoSchController.deleteChemoSchedule); // Delete user
 
-// ser Side Effect Route
+// user Side Effect Route
 apiRouter.get('/user_side_effect', authMiddleware, userSideEffectController.getAllUserSideEffects); // View all user
 apiRouter.get('/user_side_effect/:id_user_side_effect', authMiddleware, userSideEffectController.getOneUserSideEffect); // View user
 apiRouter.post('/user_side_effect/create', authMiddleware, userSideEffectValidator, userSideEffectController.createUserSideEffect); // Create a new user
 apiRouter.put('/user_side_effect/update/:id_user_side_effect', authMiddleware, userSideEffectValidator, userSideEffectController.updateUserSideEffect); // Update a new user
 apiRouter.delete('/user_side_effect/delete/:id_user_side_effect', authMiddleware, userSideEffectController.deleteUserSideEffect); // Delete user
+
+// monitoring laboratorium Route
+apiRouter.get('/monitoring_lab', authMiddleware, monitoringLabController.getAllMonitoringLab); // View all user
+apiRouter.get('/monitoring_lab/:id_monitoring_lab', authMiddleware, monitoringLabController.getOneMonitorLab); // View user
+apiRouter.post('/monitoring_lab/create', authMiddleware, monitoringLabValidator, monitoringLabController.createMonitorLab); // Create a new user
+apiRouter.put('/monitoring_lab/update/:id_monitoring_lab', authMiddleware, monitoringLabValidator, monitoringLabController.updateMonitorLab); // Update a new user
+apiRouter.delete('/monitoring_lab/delete/:id_monitoring_lab', authMiddleware, monitoringLabController.deleteMonitorLab); // Delete user
 
 module.exports = {
     apiRouter,

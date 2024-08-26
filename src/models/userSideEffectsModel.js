@@ -30,7 +30,7 @@ const User_side_effects = sequelize.define('user_side_effects', {
     allowNull: false,
   },
   time_feel: {
-    type: DataTypes.STRING(10),
+    type: DataTypes.TIME,
     allowNull: true,
   },
   cycle_to: {

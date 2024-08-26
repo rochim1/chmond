@@ -1,8 +1,7 @@
 const { validationResult } = require("express-validator");
-const UserSideEffects = require("../models/userSideEffectsModel");
-const Recomendation = require("../models/recomendationModel");
+const MonitoringLabModel = require("../models/monitoringLabModel");
 
-const createUserSideEffect = async (req, res) => {
+const createMonitorLab = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -14,16 +13,22 @@ const createUserSideEffect = async (req, res) => {
     }
 
     const {
-      id_side_effect,
       id_user,
-      date_feel,
-      time_feel,
-      cycle_to,
-      severity,
-      frekuensi,
-      distress,
+      date_lab,
+      body_weight,
+      body_height,
+      hemoglobin,
+      leucocytes,
+      platelets,
+      neutrophyle,
+      sgot,
+      sgpt,
+      bun,
+      creatinine,
+      glucose,
+      amylase,
+      Lipase,
       note,
-      status,
     } = req.body;
 
     if (!id_user) {
@@ -31,23 +36,29 @@ const createUserSideEffect = async (req, res) => {
     }
 
     // todo, mybe in the future can add automatically cycle_to value
-    const newUserSideEffect = await UserSideEffects.create({
-      id_side_effect,
+    const newMonitoringLab = await MonitoringLabModel.create({
       id_user,
-      date_feel,
-      time_feel,
-      cycle_to,
-      severity,
-      frekuensi,
-      distress,
+      date_lab,
+      body_weight,
+      body_height,
+      hemoglobin,
+      leucocytes,
+      platelets,
+      neutrophyle,
+      sgot,
+      sgpt,
+      bun,
+      creatinine,
+      glucose,
+      amylase,
+      Lipase,
       note,
-      status,
     });
 
     return res.status(201).json({
       success: true,
-      message: "User Side Effect created successfully",
-      data: newUserSideEffect,
+      message: "monitoring lab created successfully",
+      data: newMonitoringLab,
     });
   } catch (error) {
     return res.status(500).json({
@@ -60,7 +71,7 @@ const createUserSideEffect = async (req, res) => {
   }
 };
 
-const updateUserSideEffect = async (req, res) => {
+const updateMonitorLab = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -71,57 +82,69 @@ const updateUserSideEffect = async (req, res) => {
       });
     }
 
-    const { id_user_side_effect } = req.params;
+    const { id_monitoring_lab } = req.params;
     const {
-      id_side_effect,
       id_user,
-      date_feel,
-      time_feel,
-      cycle_to,
-      severity,
-      frekuensi,
-      distress,
+      date_lab,
+      body_weight,
+      body_height,
+      hemoglobin,
+      leucocytes,
+      platelets,
+      neutrophyle,
+      sgot,
+      sgpt,
+      bun,
+      creatinine,
+      glucose,
+      amylase,
+      Lipase,
       note,
-      status,
     } = req.body;
 
     if (!id_user) {
       id_user = req.user.id_user;
     }
 
-    const userSideEffect = await UserSideEffects.findOne({
+    const monitoringLab = await MonitoringLabModel.findOne({
       where: {
-        id_user_side_effect,
+        id_monitoring_lab,
         status: "active",
       },
     });
 
-    if (!userSideEffect) {
+    if (!monitoringLab) {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
         error: {
-          message: "User Side Effect not found",
+          message: "monitoring lab not found",
         },
       });
     }
 
-    await userSideEffect.update({
-      id_side_effect,
+    await monitoringLab.update({
       id_user,
-      date_feel,
-      time_feel,
-      cycle_to,
-      severity,
-      frekuensi,
-      distress,
+      date_lab,
+      body_weight,
+      body_height,
+      hemoglobin,
+      leucocytes,
+      platelets,
+      neutrophyle,
+      sgot,
+      sgpt,
+      bun,
+      creatinine,
+      glucose,
+      amylase,
+      Lipase,
       note,
-      status,
     });
 
     return res.status(200).json({
       success: true,
-      message: "User Side Effect updated successfully",
+      message: "monitoring lab updated successfully",
       data: userSideEffect,
     });
   } catch (error) {
@@ -135,42 +158,42 @@ const updateUserSideEffect = async (req, res) => {
   }
 };
 
-const deleteUserSideEffect = async (req, res) => {
+const deleteMonitorLab = async (req, res) => {
   try {
-    const { id_user_side_effect } = req.params;
+    const { id_monitoring_lab } = req.params;
 
     // get user side effect first
-    const userSideEffect = await UserSideEffects.findOne({
+    const MonitorLab = await MonitoringLabModel.findOne({
       where: {
-        id_user_side_effect,
+        id_monitoring_lab,
         status: "active",
       },
     });
 
-    if (!userSideEffect) {
+    if (!MonitorLab) {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
         error: {
-          message: "User Side Effect not found",
+          message: "monitor lab not found",
         },
       });
     }
-    
+
     await userSideEffect.update({
       status: "deleted",
     });
 
-    const deleteRecomendation = await Recomendation.update({
+    const deleteMonitoringLab = await MonitoringLabModel.update({
       id_side_effect: userSideEffect.id_side_effect,
       status: "active",
     });
-    
+
     // delete also rekomendasi artikel
 
     return res.status(200).json({
       success: true,
-      message: "User Side Effect soft-deleted successfully",
+      message: "monitor lab deleted successfully",
     });
   } catch (error) {
     return res.status(500).json({
@@ -183,30 +206,30 @@ const deleteUserSideEffect = async (req, res) => {
   }
 };
 
-const getOneUserSideEffect = async (req, res) => {
+const getOneMonitorLab = async (req, res) => {
   try {
-    const { id_user_side_effect } = req.params;
+    const { id_monitoring_lab } = req.params;
 
-    const userSideEffect = await UserSideEffects.findOne({
+    const monitorLab = await MonitoringLabModel.findOne({
       where: {
-        id_user_side_effect,
+        id_monitoring_lab,
         status: "active",
       },
     });
 
-    if (!userSideEffect) {
+    if (!monitorLab) {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
         error: {
-          message: "User Side Effect not found",
+          message: "monitoring lab not found",
         },
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: userSideEffect,
+      data: monitorLab,
     });
   } catch (error) {
     return res.status(500).json({
@@ -219,7 +242,7 @@ const getOneUserSideEffect = async (req, res) => {
   }
 };
 
-const getAllUserSideEffects = async (req, res) => {
+const getAllMonitoringLab = async (req, res) => {
   try {
     const { page = 1, pageSize = 10 } = req.body;
     const { status, id_user } =
@@ -237,7 +260,7 @@ const getAllUserSideEffects = async (req, res) => {
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const { count, rows } = await UserSideEffects.findAndCountAll({
+    const { count, rows } = await MonitoringLabModel.findAndCountAll({
       where: whereClause,
       offset,
       limit,
@@ -262,9 +285,9 @@ const getAllUserSideEffects = async (req, res) => {
 };
 
 module.exports = {
-  createUserSideEffect,
-  updateUserSideEffect,
-  deleteUserSideEffect,
-  getOneUserSideEffect,
-  getAllUserSideEffects,
+  getOneMonitorLab,
+  getAllMonitoringLab,
+  createMonitorLab,
+  updateMonitorLab,
+  deleteMonitorLab,
 };
