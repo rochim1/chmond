@@ -12,11 +12,14 @@ const app = require('./app');
 const PORT = process.env.PORT || 3000;
 
 sequelize.authenticate()
-  .then(() => {
+  .then(async () => {
     console.log('Database connected...');
     // if (process.env.environment == 'development' || process.env.environment !== 'production') {
-      return sequelize.sync({ alter: true, force: true });
-    // }
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
+      const result = await sequelize.sync();  // Or the sync method you're using
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
+      return result;
+      // }
     return 0;
   })
   .then(() => {
