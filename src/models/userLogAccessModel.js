@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const User = require('./user');  // Import the User model
+const User = require('./userModel');  // Import the User model
 
 const user_log_access = sequelize.define('user_log_access', {
   id_log: {
