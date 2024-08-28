@@ -1,8 +1,16 @@
-const { validationResult } = require("express-validator");
-const { Educations, Recomendation, SideEffects } = require("../models");
+const {
+  validationResult
+} = require("express-validator");
+const {
+  Educations,
+  Recomendation,
+  SideEffects
+} = require("../models");
 const fs = require("fs");
 const path = require("path");
-const { Op } = require("sequelize");
+const {
+  Op
+} = require("sequelize");
 
 // Create Education
 const createEducation = async (req, res) => {
@@ -16,23 +24,15 @@ const createEducation = async (req, res) => {
       });
     }
 
-    const { title, content, video_link, id_side_effects, thumbnail_base64 } =
-      req.body;
+    const {
+      title,
+      content,
+      video_link,
+      id_side_effects,
+      thumbnail_base64
+    } =
+    req.body;
     let thumbnail = null;
-
-    if (
-      !id_side_effects ||
-      !Array.isArray(id_side_effects) ||
-      id_side_effects.length === 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        code: "BAD_REQUEST",
-        error: {
-          message: "At least one Side Effect ID is required",
-        },
-      });
-    }
 
     // Handle file upload
     // if (req.file) {
@@ -102,13 +102,28 @@ const createEducation = async (req, res) => {
 // Get One Education
 const getOneEducation = async (req, res) => {
   try {
-    const { id_education } = req.params;
+    const {
+      id_education
+    } = req.params;
 
-    const education = await Educations.findOne({
+    let education = await Educations.findOne({
       where: {
         id_education,
         status: "active",
       },
+      include: [{
+        model: Recomendation,
+        as: 'recomendations',
+        where: {
+          status: 'active',
+        },
+        required: false,
+        include: [{
+          model: SideEffects, // Ensure correct model reference (Side_effects)
+          as: "sideEffect",
+          required: false,
+        }, ],
+      }, ],
     });
 
     if (!education) {
@@ -120,6 +135,28 @@ const getOneEducation = async (req, res) => {
         },
       });
     }
+
+    let getSideEffects = [];
+    if (education && education.recomendations && education.recomendations.length) {
+      getSideEffects = education.recomendations.map(recomendation => recomendation.sideEffect);
+    }
+
+    const educationData = {
+      id_education: education.id_education,
+      title: education.title,
+      content: education.content,
+      video_link: education.video_link,
+      thumbnail: education.thumbnail,
+      status: education.status,
+      createdAt: education.createdAt,
+      updatedAt: education.updatedAt,
+    };
+
+    // Return education data along with side effects
+    education = {
+      ...educationData, // Include all the education fields
+      side_effects: getSideEffects // Include side effects array
+    };
 
     return res.status(200).json({
       success: true,
@@ -136,11 +173,17 @@ const getOneEducation = async (req, res) => {
   }
 };
 
+
 // Get All Educations with Pagination
 const getAllEducations = async (req, res) => {
   try {
-    const { page = 1, pageSize = 10 } = req.body;
-    const { status, tipe } = req.body.filter || {
+    const {
+      page = 1, pageSize = 10
+    } = req.body;
+    const {
+      status,
+      tipe
+    } = req.body.filter || {
       status: "active",
     };
 
@@ -149,11 +192,17 @@ const getAllEducations = async (req, res) => {
     };
     if (tipe) {
       if (tipe == "video_only") {
-        EducationWhereClause.video_link = { [Op.ne]: null };
+        EducationWhereClause.video_link = {
+          [Op.ne]: null
+        };
       } else if (tipe == "article_only") {
-        EducationWhereClause.video_link = { [Op.eq]: null };
+        EducationWhereClause.video_link = {
+          [Op.eq]: null
+        };
       } else {
-        EducationWhereClause = { ...EducationWhereClause };
+        EducationWhereClause = {
+          ...EducationWhereClause
+        };
       }
     }
 
@@ -164,52 +213,53 @@ const getAllEducations = async (req, res) => {
       where: EducationWhereClause,
       offset,
       limit,
-      include: [
-        {
-          model: Recomendation,
-          as: 'recomendations',
-          where: {
-            status: 'active',
-          },
-          include: [
-            {
-              model: SideEffects,
-              as: "sideEffect",
-            },
-          ],
+      distinct: true, // Ensures distinct counting of the education records
+      include: [{
+        model: Recomendation,
+        as: 'recomendations',
+        where: {
+          status: 'active',
         },
-      ],
+        required: false,
+        include: [{
+          model: SideEffects, // Ensure correct model reference
+          as: "sideEffect",
+          required: false,
+        }, ],
+      }, ],
     });
-    
+
+
     if (educations && educations.rows && educations.rows.length) {
       educations.rows = educations.rows.map((education) => {
+        // Remove the recomendations from the education object
+        const educationData = {
+          id_education: education.id_education,
+          title: education.title,
+          content: education.content,
+          video_link: education.video_link,
+          thumbnail: education.thumbnail,
+          status: education.status,
+          createdAt: education.createdAt,
+          updatedAt: education.updatedAt,
+        };
+
+        let getSideEffects = [];
         if (education && education.recomendations && education.recomendations.length) {
-          let getSideEffects = education.recomendations.map(recomendation => recomendation.sideEffect);
-    
-          // Remove the recomendations from the education object
-          const educationData = {
-            id_education: education.id_education,
-            title: education.title,
-            content: education.content,
-            video_link: education.video_link,
-            thumbnail: education.thumbnail,
-            status: education.status,
-            createdAt: education.createdAt,
-            updatedAt: education.updatedAt,
-          };
-    
-          // Return education data along with side effects
-          return {
-            ...educationData,  // Include all the education fields
-            side_effects: getSideEffects  // Include side effects array
-          };
+          getSideEffects = education.recomendations.map(recomendation => recomendation.sideEffect);
         }
-        
+
+        // Return education data along with side effects
+        return {
+          ...educationData, // Include all the education fields
+          side_effects: getSideEffects // Include side effects array
+        };
+
         // Return education without modifications if no recommendations are found
         return education;
       });
     }
-    
+
 
     return res.status(200).json({
       success: true,
@@ -241,7 +291,9 @@ const updateEducation = async (req, res) => {
       });
     }
 
-    const { id_education } = req.params; // Get education ID from params
+    const {
+      id_education
+    } = req.params; // Get education ID from params
     const {
       title,
       content,
@@ -415,7 +467,9 @@ const updateEducation = async (req, res) => {
 // Soft Delete Education
 const deleteEducation = async (req, res) => {
   try {
-    const { id_education } = req.params;
+    const {
+      id_education
+    } = req.params;
 
     const education = await Educations.findOne({
       where: {
@@ -458,10 +512,15 @@ const deleteEducation = async (req, res) => {
     });
 
     // Update related recommendations to 'deleted'
-    await Recomendation.update(
-      { status: "deleted", deletedAt: new Date() },
-      { where: { id_education, status: "active" } }
-    );
+    await Recomendation.update({
+      status: "deleted",
+      deletedAt: new Date()
+    }, {
+      where: {
+        id_education,
+        status: "active"
+      }
+    });
 
     return res.status(200).json({
       success: true,

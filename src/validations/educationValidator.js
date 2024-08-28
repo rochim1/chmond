@@ -57,7 +57,8 @@ const educationValidatorCreate = [
   .isArray().withMessage('id_side_effects must be an array')
   .custom((value) => {
     if (value.length === 0) {
-      throw new Error('At least one id_side_effect is required');
+      return true
+      // throw new Error('At least one id_side_effect is required');
     }
     if (!value.every(id => uuidValidate(id))) {
       throw new Error('Each id_side_effect must be a valid UUID');
@@ -96,7 +97,8 @@ const educationValidatorUpdate = [
   .isArray().withMessage('id_side_effects must be an array')
   .custom((value) => {
     if (value.length === 0) {
-      throw new Error('At least one id_side_effect is required');
+      return true
+      // throw new Error('At least one id_side_effect is required');
     }
     if (!value.every(id => uuidValidate(id))) {
       throw new Error('Each id_side_effect must be a valid UUID');
