@@ -4,6 +4,20 @@ const {
 const Educations = require('../models/educationModel'); // Import the Educations model
 const uuidValidate = require('uuid-validate');
 
+// Custom function to allow null
+const allowNull = (validatorFn) => {
+  return (value, {
+    req
+  }) => {
+    if (value === null || value === '') {
+      return true; // Allow `null` or empty string
+    }
+    return validatorFn(value, {
+      req
+    }); // Apply original validator
+  };
+};
+
 const educationValidatorCreate = [
   body('title')
   .notEmpty().withMessage('Title is required')
@@ -29,12 +43,15 @@ const educationValidatorCreate = [
   .isString().withMessage('Content must be a string'),
 
   body('video_link')
-  .optional()
-  .isURL().withMessage('Video link must be a valid URL')
+  .custom(allowNull((value) => {
+    // Validate URL if not null
+    return /^https?:\/\/[^\s$.?#].[^\s]*$/.test(value);
+  }))
+  .withMessage('Video link must be a valid URL')
   .isLength({
     max: 150
-  }).withMessage('Video link can be at most 150 characters long'),
-
+  })
+  .withMessage('Video link can be at most 150 characters long'),
   body('id_side_effects')
   .optional()
   .isArray().withMessage('id_side_effects must be an array')
@@ -64,11 +81,15 @@ const educationValidatorUpdate = [
   .isString().withMessage('Content must be a string'),
 
   body('video_link')
-  .optional()
-  .isURL().withMessage('Video link must be a valid URL')
+  .custom(allowNull((value) => {
+    // Validate URL if not null
+    return /^https?:\/\/[^\s$.?#].[^\s]*$/.test(value);
+  }))
+  .withMessage('Video link must be a valid URL')
   .isLength({
     max: 150
-  }).withMessage('Video link can be at most 150 characters long'),
+  })
+  .withMessage('Video link can be at most 150 characters long'),
 
   body('id_side_effects')
   .optional()
