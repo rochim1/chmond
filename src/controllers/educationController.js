@@ -1,6 +1,5 @@
 const { validationResult } = require("express-validator");
-const Educations = require("../models/educationModel");
-const Recomendation = require("../models/recomendationModel");
+const { Educations, Recomendation, SideEffects } = require("../models");
 const fs = require("fs");
 const path = require("path");
 const { Op } = require("sequelize");
@@ -161,11 +160,56 @@ const getAllEducations = async (req, res) => {
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const educations = await Educations.findAndCountAll({
+    let educations = await Educations.findAndCountAll({
       where: EducationWhereClause,
       offset,
       limit,
+      include: [
+        {
+          model: Recomendation,
+          as: 'recomendations',
+          where: {
+            status: 'active',
+          },
+          include: [
+            {
+              model: SideEffects,
+              as: "sideEffect",
+            },
+          ],
+        },
+      ],
     });
+    
+    if (educations && educations.rows && educations.rows.length) {
+      educations.rows = educations.rows.map((education) => {
+        if (education && education.recomendations && education.recomendations.length) {
+          let getSideEffects = education.recomendations.map(recomendation => recomendation.sideEffect);
+    
+          // Remove the recomendations from the education object
+          const educationData = {
+            id_education: education.id_education,
+            title: education.title,
+            content: education.content,
+            video_link: education.video_link,
+            thumbnail: education.thumbnail,
+            status: education.status,
+            createdAt: education.createdAt,
+            updatedAt: education.updatedAt,
+          };
+    
+          // Return education data along with side effects
+          return {
+            ...educationData,  // Include all the education fields
+            side_effects: getSideEffects  // Include side effects array
+          };
+        }
+        
+        // Return education without modifications if no recommendations are found
+        return education;
+      });
+    }
+    
 
     return res.status(200).json({
       success: true,

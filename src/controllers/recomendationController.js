@@ -71,7 +71,7 @@ const getRecomendation = async (req, res) => {
         },
         {
           model: SideEffects,
-          as: "side_effect",
+          as: "sideEffect",
           attributes: [
             "id_side_effect",
             "effect_name",
