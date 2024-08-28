@@ -28,6 +28,10 @@ const Educations = sequelize.define('educations', {
     defaultValue: 'active',
     allowNull: true,
   },
+  deletedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  }
 }, {
   timestamps: true,
   // tableName: 'educations'

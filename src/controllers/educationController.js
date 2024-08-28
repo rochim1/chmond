@@ -509,6 +509,7 @@ const deleteEducation = async (req, res) => {
 
     await education.update({
       status: "deleted",
+      deletedAt: new Date()
     });
 
     // Update related recommendations to 'deleted'
