@@ -24,7 +24,7 @@ const ChemoSchedule = sequelize.define('chemo_schedules', {
     type: DataTypes.STRING(50),
     allowNull: true,
   },
-  notes: {
+  note: {
     type: DataTypes.STRING,
     allowNull: true,
   },

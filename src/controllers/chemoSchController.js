@@ -22,7 +22,7 @@ const createChemoSchedule = async (req, res) => {
       waktu_kemoterapi,
       remember_before_minutes,
       id_user,
-      notes,
+      note,
     } = req.body;
 
     if (!id_user) {
@@ -36,7 +36,7 @@ const createChemoSchedule = async (req, res) => {
       waktu_kemoterapi,
       remember_before_minutes,
       id_user,
-      notes,
+      note,
     });
 
     return res.status(201).json({
