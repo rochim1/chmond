@@ -106,7 +106,7 @@ const updateMonitorLab = async (req, res) => {
       id_user = req.user.id_user;
     }
 
-    const monitoringLab = await MonitoringLabModel.findOne({
+    let monitoringLab = await MonitoringLabModel.findOne({
       where: {
         id_monitoring_lab,
         status: "active",
@@ -123,7 +123,7 @@ const updateMonitorLab = async (req, res) => {
       });
     }
 
-    await monitoringLab.update({
+    monitoringLab = await monitoringLab.update({
       id_user,
       date_lab,
       body_weight,
@@ -145,7 +145,7 @@ const updateMonitorLab = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "monitoring lab updated successfully",
-      data: userSideEffect,
+      data: monitoringLab,
     });
   } catch (error) {
     return res.status(500).json({
@@ -180,16 +180,9 @@ const deleteMonitorLab = async (req, res) => {
       });
     }
 
-    await userSideEffect.update({
+    await MonitorLab.update({
       status: "deleted",
     });
-
-    const deleteMonitoringLab = await MonitoringLabModel.update({
-      id_side_effect: userSideEffect.id_side_effect,
-      status: "active",
-    });
-
-    // delete also rekomendasi artikel
 
     return res.status(200).json({
       success: true,
