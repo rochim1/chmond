@@ -8,6 +8,7 @@ const chemoSchController = require('../controllers/chemoSchController');
 const userSideEffectController = require('../controllers/userSideEffectController');
 const recomendationController = require('../controllers/recomendationController');
 const monitoringLabController = require('../controllers/monitoringLabController');
+const drugSchController = require('../controllers/drugSchController');
 
 // validator
 const userValidator = require('../validations/userValidator');
@@ -21,6 +22,7 @@ const {
 const chemoSchValidator = require('../validations/chemoSchValidator');
 const userSideEffectValidator = require('../validations/userSideEffectValidator');
 const monitoringLabValidator = require('../validations/monitoringLabValidator')
+const drugSchValidator = require('../validations/drugValidator')
 
 // middleware
 const authMiddleware = require('../middlewares/authMiddleware')
@@ -91,6 +93,13 @@ apiRouter.get('/monitoring_lab/:id_monitoring_lab', authMiddleware, monitoringLa
 apiRouter.post('/monitoring_lab/create', authMiddleware, monitoringLabValidator, monitoringLabController.createMonitorLab); // Create a new user
 apiRouter.put('/monitoring_lab/update/:id_monitoring_lab', authMiddleware, monitoringLabValidator, monitoringLabController.updateMonitorLab); // Update a new user
 apiRouter.delete('/monitoring_lab/delete/:id_monitoring_lab', authMiddleware, monitoringLabController.deleteMonitorLab); // Delete user
+
+// drug schedule Route
+apiRouter.get('/drug_schedule', authMiddleware, drugSchController.getAllDrugSchedules); // View all user
+apiRouter.get('/drug_schedule/:id_drug_schedule', authMiddleware, drugSchController.getOneDrugSchdules); // View user
+apiRouter.post('/drug_schedule/create', authMiddleware, drugSchValidator, drugSchController.createDrugSchedule); // Create a new user
+apiRouter.put('/drug_schedule/update/:id_drug_schedule', authMiddleware, drugSchValidator, drugSchController.updateDrugSchedule); // Update a new user
+apiRouter.delete('/drug_schedule/delete/:id_drug_schedule', authMiddleware, drugSchController.deleteDrugSchedule); // Delete user
 
 module.exports = {
     apiRouter,

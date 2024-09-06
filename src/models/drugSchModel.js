@@ -1,40 +1,81 @@
-const { DataTypes } = require('sequelize');
+const {
+  DataTypes
+} = require('sequelize');
 const sequelize = require('../config/database');
-const User = require('./userModel');
 
 const DrugSchedule = sequelize.define('drug_schedules', {
-  id_chemoSchedule: {
+  id_drug_schedule: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
-  tujuan_kemoterapi: {
-    type: DataTypes.STRING(150),
+  drug_name: {
+    type: DataTypes.STRING(100),
     allowNull: false,
   },
-  tanggal_kemoterapi: {
-    type: DataTypes.STRING(50),
+  dose: {
+    type: DataTypes.TINYINT(2),
     allowNull: false,
   },
-  waktu_kemoterapi: {
-    type: DataTypes.STRING(50),
-    allowNull: false,
-  },
-  remember_before_minutes: {  // Fixed typo in the field name
-    type: DataTypes.STRING(50),
+  drug_unit: {
+    type: DataTypes.ENUM('Pil',
+      'Tablet',
+      'Tetes',
+      'Kaplet',
+      'Kapsul',
+      'Semprotan (spray)',
+      'Supositoria',
+      'Sirup',
+      'Salep',
+      'Krim',
+      'Gel',
+      'Serbuk',
+      'Injeksi (suntikan)',
+      'Infus',
+      'Inhaler',
+      'Patch (plester)',
+      'Larutan',
+      'Suspensi',
+      'Emulsi',
+      'Granul',
+      'Obat kumur'),
+    defaultValue: 'pil',
     allowNull: true,
   },
-  notes: {
+  periode: {
+    type: DataTypes.ENUM('setiap_hari', 'hari_pilihan'),
+    defaultValue: 'pil',
+    allowNull: true,
+  },
+  choosen_days: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+  },
+  consume_per_day: {
+    type: DataTypes.TINYINT(2),
+    allowNull: true,
+  },
+  consume_regulation: {
+    type: DataTypes.ENUM('sebelum_makan', 'sesudah_makan', 'tidak_ada_aturan'),
+    defaultValue: 'sebelum_makan',
+    allowNull: true,
+  },
+  first_date_consume: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  id_user: {
-    type: DataTypes.UUID,
-    references: {
-      model: User,
-      key: 'id_user',
-    },
+  long_consume: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  activate_notive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
     allowNull: false,
+  },
+  note: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   status: {
     type: DataTypes.ENUM('active', 'deleted'),
