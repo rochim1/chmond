@@ -28,7 +28,7 @@ const createDrugSchedule = async (req, res) => {
     long_consume,
     activate_notive,
     note,
-    status
+    // status
   } = req.body;
 
   try {
@@ -44,7 +44,7 @@ const createDrugSchedule = async (req, res) => {
       long_consume,
       activate_notive,
       note,
-      status
+      // status
     });
 
     return res.status(201).json({
@@ -89,7 +89,7 @@ const updateDrugSchedule = async (req, res) => {
     long_consume,
     activate_notive,
     note,
-    status
+    // status
   } = req.body;
 
   try {
@@ -115,7 +115,7 @@ const updateDrugSchedule = async (req, res) => {
       long_consume,
       activate_notive,
       note,
-      status
+      // status
     });
 
     return res.status(200).json({

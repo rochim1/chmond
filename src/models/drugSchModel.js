@@ -43,8 +43,8 @@ const DrugSchedule = sequelize.define('drug_schedules', {
     allowNull: true,
   },
   periode: {
-    type: DataTypes.ENUM('setiap_hari', 'hari_pilihan'),
-    defaultValue: 'pil',
+    type: DataTypes.ENUM('setiap_hari', 'hari_pilihan', 'tempo_waktu'),
+    defaultValue: 'setiap_hari',
     allowNull: true,
   },
   choosen_days: {

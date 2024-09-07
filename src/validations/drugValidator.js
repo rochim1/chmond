@@ -33,8 +33,6 @@ const drugScheduleValidationRules = [
   body('activate_notive')
     .isBoolean().withMessage('Activate notice must be a boolean')
     .notEmpty().withMessage('Activate notice is required'),
-
-  body('status')
-    .isIn(['active', 'deleted']).withMessage('Invalid status')
-    .notEmpty().withMessage('Status is required')
 ];
+
+module.exports = drugScheduleValidationRules;
