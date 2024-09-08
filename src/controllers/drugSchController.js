@@ -1,9 +1,12 @@
 const {
   validationResult
 } = require('express-validator');
-const DrugSchedule = require('../models/drugSchModel');
+const {
+  DrugSchedule,
+  drugConsumeTime
+} = require('../models/index');
 const moment = require('moment');
-const drugConsumeTime = require('../models/drugConsumeTimeModel')
+const { Op } = require('sequelize'); // Import Sequelize operators
 // Create DrugSchedule
 const createDrugSchedule = async (req, res) => {
   const errors = validationResult(req);
@@ -46,7 +49,7 @@ const createDrugSchedule = async (req, res) => {
   if (periode !== "setiap_hari" && choosen_days && choosen_days.length) {
     choosen_days = JSON.stringify(choosen_days);
   }
-  
+
   if (consume_time && consume_time.length) {
     consume_time = JSON.stringify(consume_time);
   }
@@ -231,6 +234,104 @@ const updateDrugSchedule = async (req, res) => {
   }
 };
 
+const getAllDrugSchedulesWithDate = async (req, res) => {
+  try {
+    const {
+      page = 1, pageSize = 10
+    } = req.body;
+
+    const {
+      status = 'active',
+        id_user,
+        drug_name,
+        drug_unit,
+        periode,
+        choosen_days,
+        consume_per_day,
+        consume_regulation,
+        date_consume
+    } = req.body && req.body.filter ? req.body.filter : {};
+
+    if (!date_consume) {
+      return res.status(400).json({
+        success: false,
+        code: "BAD_REQUEST",
+        message: 'Date consume is required',
+      });
+    }
+    // Build the where clause with optional filters
+    let whereClause = {
+      status, // Include status in the filter by default
+      ...(id_user && {
+        id_user
+      }),
+      ...(drug_name && {
+        drug_name: {
+          [Op.like]: `%${drug_name}%`
+        }
+      }), // Partial match for drug_name
+      ...(drug_unit && {
+        drug_unit
+      }),
+      ...(periode && {
+        periode
+      }),
+      ...(choosen_days && {
+        choosen_days: {
+          [Op.like]: `%${choosen_days}%`
+        }
+      }), // Partial match for choosen_days
+      ...(consume_per_day && {
+        consume_per_day
+      }),
+      ...(consume_regulation && {
+        consume_regulation
+      })
+    };
+
+    let whereClauseConsume = {};
+    if (date_consume) {
+      whereClauseConsume = {
+        date: {
+          [Op.eq]: date_consume, // Condition where date is greater than 2024-08-01
+        }
+      }
+    }
+    const offset = (page - 1) * pageSize;
+    const limit = parseInt(pageSize);
+
+    // Fetch paginated drug schedules with count
+    const {
+      count,
+      rows
+    } = await DrugSchedule.findAndCountAll({
+      where: whereClause,
+      offset,
+      limit,
+      include: [{
+        model: drugConsumeTime,
+        as: 'drug_consume_times', // Alias defined in the relationship
+        where: whereClauseConsume
+      }]
+    });
+
+    return res.status(200).json({
+      success: true,
+      totalItems: count,
+      totalPages: Math.ceil(count / pageSize),
+      currentPage: parseInt(page),
+      data: rows,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      code: "INTERNAL_SERVER_ERROR",
+      error: {
+        message: error.message,
+      },
+    });
+  }
+};
 
 // Get all DrugSchedules
 const getAllDrugSchedules = async (req, res) => {
@@ -396,4 +497,5 @@ module.exports = {
   getAllDrugSchedules,
   getOneDrugSchdules,
   deleteDrugSchedule,
+  getAllDrugSchedulesWithDate
 }

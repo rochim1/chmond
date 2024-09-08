@@ -95,6 +95,7 @@ apiRouter.put('/monitoring_lab/update/:id_monitoring_lab', authMiddleware, monit
 apiRouter.delete('/monitoring_lab/delete/:id_monitoring_lab', authMiddleware, monitoringLabController.deleteMonitorLab); // Delete user
 
 // drug schedule Route
+apiRouter.get('/drug_schedule/with_date', authMiddleware, drugSchController.getAllDrugSchedulesWithDate); // View all user
 apiRouter.get('/drug_schedule', authMiddleware, drugSchController.getAllDrugSchedules); // View all user
 apiRouter.get('/drug_schedule/:id_drug_schedule', authMiddleware, drugSchController.getOneDrugSchdules); // View user
 apiRouter.post('/drug_schedule/create', authMiddleware, drugSchValidator, drugSchController.createDrugSchedule); // Create a new user
