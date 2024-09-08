@@ -1,6 +1,7 @@
 const Educations = require('./educationModel');
 const Recomendation = require('./recomendationModel');
 const SideEffects = require('./sideEffectsModel');
+const UserSideEffects = require("./userSideEffectsModel");
 
 // Define associations here
 Educations.hasMany(Recomendation, {
@@ -18,6 +19,16 @@ Recomendation.belongsTo(SideEffects, {
   as: 'sideEffect', // Use camelCase for clarity
 });
 
+UserSideEffects.belongsTo(SideEffects, {
+  foreignKey: 'id_side_effect',
+  as: 'sideEffect', // Use camelCase for clarity
+});
+
+SideEffects.hasMany(UserSideEffects, {
+  foreignKey: 'id_side_effect',
+  as: 'user_side_effects', // Association alias
+});
+
 SideEffects.hasMany(Recomendation, {
   foreignKey: 'id_side_effect',
   as: 'recomendations', // Association alias
@@ -27,5 +38,6 @@ SideEffects.hasMany(Recomendation, {
 module.exports = {
   Educations,
   Recomendation,
+  UserSideEffects,
   SideEffects,
 };
