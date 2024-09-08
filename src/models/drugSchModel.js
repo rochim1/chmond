@@ -2,6 +2,7 @@ const {
   DataTypes
 } = require('sequelize');
 const sequelize = require('../config/database');
+const User = require('./userModel');  // Import the User model
 
 const DrugSchedule = sequelize.define('drug_schedules', {
   id_drug_schedule: {
@@ -43,7 +44,7 @@ const DrugSchedule = sequelize.define('drug_schedules', {
     allowNull: true,
   },
   periode: {
-    type: DataTypes.ENUM('setiap_hari', 'hari_pilihan', 'tempo_waktu'),
+    type: DataTypes.ENUM('setiap_hari', 'hari_pilihan', 'jangka_waktu'),
     defaultValue: 'setiap_hari',
     allowNull: true,
   },
@@ -56,7 +57,7 @@ const DrugSchedule = sequelize.define('drug_schedules', {
     allowNull: true,
   },
   consume_regulation: {
-    type: DataTypes.ENUM('sebelum_makan', 'sesudah_makan', 'tidak_ada_aturan'),
+    type: DataTypes.ENUM('sebelum_makan', 'sesudah_makan', 'saat_makan', 'saat_perut_kosong', 'sebelum tidur', 'setelah_bangun_tidur'),
     defaultValue: 'sebelum_makan',
     allowNull: true,
   },
@@ -68,7 +69,7 @@ const DrugSchedule = sequelize.define('drug_schedules', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  activate_notive: {
+  activate_notif: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
     allowNull: false,
@@ -76,6 +77,22 @@ const DrugSchedule = sequelize.define('drug_schedules', {
   note: {
     type: DataTypes.STRING,
     allowNull: true,
+  },
+  consume_time: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  day_number: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  id_user: {
+    type: DataTypes.UUID,
+    references: {
+      model: User,
+      key: "id_user",
+    },
+    allowNull: false,
   },
   status: {
     type: DataTypes.ENUM('active', 'deleted'),

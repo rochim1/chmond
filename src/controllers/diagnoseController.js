@@ -100,9 +100,6 @@ const getAllDiagnoses = async (req, res) => {
   }
 };
 
-
-
-
 // mutation
 const createDiagnose = async (req, res) => {
   try {
