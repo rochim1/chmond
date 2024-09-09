@@ -117,7 +117,7 @@ const createDrugSchedule = async (req, res) => {
 
           // Check if the day is Sunday (0), Monday (1), or Friday (5)
           if (numberOfWeek.includes(dayOfWeek)) {
-            filteredDaysArray.push(date.format('YYYY-MM-DD'));
+            daysArray.push(date.format('YYYY-MM-DD'));
           }
         }
       }
