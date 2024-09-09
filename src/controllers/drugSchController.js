@@ -3,7 +3,7 @@ const {
 } = require('express-validator');
 const {
   DrugSchedule,
-  drugConsumeTime
+  DrugConsumeTime
 } = require('../models/index');
 const moment = require('moment');
 const {
@@ -126,7 +126,7 @@ const createDrugSchedule = async (req, res) => {
 
       for (const date of daysArray) {
         for (const time of consume_time) {
-          const drugConsumeList = drugConsumeTime.create({ // not using await
+          const drugConsumeList = DrugConsumeTime.create({ // not using await
             id_drug_schedule: newDrugSchedule.id_drug_schedule,
             name: newDrugSchedule.drug_name,
             time: time,
@@ -312,7 +312,7 @@ const getAllDrugSchedulesWithDate = async (req, res) => {
       offset,
       limit,
       include: [{
-        model: drugConsumeTime,
+        model: DrugConsumeTime,
         as: 'drug_consume_times', // Alias defined in the relationship
         where: whereClauseConsume
       }]

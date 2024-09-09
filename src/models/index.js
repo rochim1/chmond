@@ -3,7 +3,7 @@ const Recomendation = require('./recomendationModel');
 const SideEffects = require('./sideEffectsModel');
 const UserSideEffects = require("./userSideEffectsModel");
 const DrugSchedule = require('./drugSchModel')
-const drugConsumeTime = require('./drugConsumeTimeModel')
+const DrugConsumeTime = require('./drugConsumeTimeModel')
 // Define associations here
 Educations.hasMany(Recomendation, {
   foreignKey: 'id_education',
@@ -36,13 +36,13 @@ SideEffects.hasMany(Recomendation, {
 });
 
 // ========================================================================
-DrugSchedule.hasMany(drugConsumeTime, {
+DrugSchedule.hasMany(DrugConsumeTime, {
   foreignKey: 'id_drug_schedule',
   as: 'drug_consume_times',
   onDelete: 'CASCADE', // Optional: handle delete
 });
 
-drugConsumeTime.belongsTo(DrugSchedule, {
+DrugConsumeTime.belongsTo(DrugSchedule, {
   foreignKey: 'id_drug_schedule',
   as: 'drug_schedule',
   onDelete: 'NO ACTION', // Optional: handle delete
@@ -54,5 +54,5 @@ module.exports = {
   UserSideEffects,
   SideEffects,
   DrugSchedule,
-  drugConsumeTime
+  DrugConsumeTime
 };
