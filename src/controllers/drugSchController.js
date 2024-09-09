@@ -6,7 +6,9 @@ const {
   drugConsumeTime
 } = require('../models/index');
 const moment = require('moment');
-const { Op } = require('sequelize'); // Import Sequelize operators
+const {
+  Op
+} = require('sequelize'); // Import Sequelize operators
 // Create DrugSchedule
 const createDrugSchedule = async (req, res) => {
   const errors = validationResult(req);
@@ -55,7 +57,7 @@ const createDrugSchedule = async (req, res) => {
   }
 
   try {
-    const newDrugSchedule = await DrugSchedule.create({
+    let newDrugSchedule = await DrugSchedule.create({
       drug_name,
       dose,
       drug_unit,
@@ -135,7 +137,8 @@ const createDrugSchedule = async (req, res) => {
         }
       }
     }
-
+    newDrugSchedule.consume_time = newDrugSchedule.consume_time ? JSON.parse(newDrugSchedule.consume_time) : [];
+    newDrugSchedule.choosen_days = newDrugSchedule.choosen_days ? JSON.parse(newDrugSchedule.choosen_days) : [];
     return res.status(201).json({
       success: true,
       message: 'Drug schedule created successfully',
@@ -301,7 +304,7 @@ const getAllDrugSchedulesWithDate = async (req, res) => {
     const limit = parseInt(pageSize);
 
     // Fetch paginated drug schedules with count
-    const {
+    let {
       count,
       rows
     } = await DrugSchedule.findAndCountAll({
@@ -315,12 +318,36 @@ const getAllDrugSchedulesWithDate = async (req, res) => {
       }]
     });
 
+    rows = rows.map(data => {
+      return {
+        id_drug_schedule: data.id_drug_schedule,
+        drug_name: data.drug_name,
+        dose: data.dose,
+        drug_unit: data.drug_unit,
+        periode: data.periode,
+        consume_per_day: data.consume_per_day,
+        consume_regulation: data.consume_regulation,
+        first_date_consume: data.first_date_consume,
+        long_consume: data.long_consume,
+        activate_notif: data.activate_notif,
+        note: data.note,
+        day_number: data.day_number,
+        id_user: data.id_user,
+        status: data.status,
+        deletedAt: data.deletedAt,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        choosen_days: data.choosen_days ? JSON.parse(data.choosen_days) : [],
+        consume_time: data.consume_time ? JSON.parse(data.consume_time) : [],
+        drug_consume_times: data.drug_consume_times,
+      }
+    });
     return res.status(200).json({
       success: true,
       totalItems: count,
       totalPages: Math.ceil(count / pageSize),
       currentPage: parseInt(page),
-      data: rows,
+      data: rows
     });
   } catch (error) {
     return res.status(500).json({
@@ -385,7 +412,7 @@ const getAllDrugSchedules = async (req, res) => {
     const limit = parseInt(pageSize);
 
     // Fetch paginated drug schedules with count
-    const {
+    let {
       count,
       rows
     } = await DrugSchedule.findAndCountAll({
@@ -394,12 +421,37 @@ const getAllDrugSchedules = async (req, res) => {
       limit,
     });
 
+    rows = rows.map(data => {
+      return {
+        id_drug_schedule: data.id_drug_schedule,
+        drug_name: data.drug_name,
+        dose: data.dose,
+        drug_unit: data.drug_unit,
+        periode: data.periode,
+        consume_per_day: data.consume_per_day,
+        consume_regulation: data.consume_regulation,
+        first_date_consume: data.first_date_consume,
+        long_consume: data.long_consume,
+        activate_notif: data.activate_notif,
+        note: data.note,
+        day_number: data.day_number,
+        id_user: data.id_user,
+        status: data.status,
+        deletedAt: data.deletedAt,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        choosen_days: data.choosen_days ? JSON.parse(data.choosen_days) : [],
+        consume_time: data.consume_time ? JSON.parse(data.consume_time) : [],
+        drug_consume_times: data.drug_consume_times,
+      }
+    });
+
     return res.status(200).json({
       success: true,
       totalItems: count,
       totalPages: Math.ceil(count / pageSize),
       currentPage: parseInt(page),
-      data: rows,
+      data: rows
     });
   } catch (error) {
     return res.status(500).json({
@@ -420,7 +472,7 @@ const getOneDrugSchdules = async (req, res) => {
   } = req.params;
 
   try {
-    const drugSchedule = await DrugSchedule.findOne({
+    let drugSchedule = await DrugSchedule.findOne({
       where: {
         id_drug_schedule,
         status: "active",
@@ -434,7 +486,8 @@ const getOneDrugSchdules = async (req, res) => {
         message: 'Drug schedule not found',
       });
     }
-
+    drugSchedule.consume_time = drugSchedule.consume_time ? JSON.parse(drugSchedule.consume_time) : []
+    drugSchedule.choosen_days = drugSchedule.choosen_days ? JSON.parse(drugSchedule.choosen_days) : []
     return res.status(200).json({
       success: true,
       message: 'Drug schedule retrieved successfully',
