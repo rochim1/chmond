@@ -9,6 +9,8 @@ const moment = require('moment');
 const {
   Op
 } = require('sequelize'); // Import Sequelize operators
+
+// not used now
 // CREATE DrugConsumeTime
 const createDrugConsumeTime = async (req, res) => {
   const errors = validationResult(req);
@@ -21,16 +23,33 @@ const createDrugConsumeTime = async (req, res) => {
   }
 
   try {
-    const { id_drug_schedule, name, time, id_user, date, is_consumed, status } = req.body;
+    let { id_drug_schedule, name, time, id_user, date } = req.body;
+    if (!id_user) {
+      id_user = req.user.id_user;
+    }
+
+    const drugSchedule = await DrugSchedule.findOne({
+      where: {
+        id_drug_schedule,
+        status: "active",
+      },
+    });
+
+    if (!drugSchedule) {
+      return res.status(404).json({
+        success: false,
+        code: "NOT_FOUND",
+        message: 'Drug schedule not found',
+      });
+    }
     
+    name = name ?? drugSchedule.name;
     const newDrugConsumeTime = await DrugConsumeTime.create({
       id_drug_schedule,
       name,
       time,
       id_user,
-      date,
-      is_consumed,
-      status
+      date
     });
 
     return res.status(201).json({
@@ -94,10 +113,33 @@ const getAllDrugConsumeTimes = async (req, res) => {
 };
 
 // GET DrugConsumeTime by ID
-const getDrugConsumeTimeById = async (req, res) => {
+const GetOneDrugConsumeTime = async (req, res) => {
   try {
-    const { id } = req.params;
-    const drugConsumeTime = await DrugConsumeTime.findByPk(id);
+    const { id_drug_consume_time } = req.params;
+    let drugConsumeTime = await DrugConsumeTime.findOne({
+      where: {
+        id_drug_consume_time,
+        status: "active",
+      },
+      include: [
+        {
+          model: DrugSchedule,
+          as: 'drug_schedule',  // Optional alias
+          required: true,      // Inner join, set to false for outer join
+          where: {
+            status: 'active'
+          }
+        },
+      ],
+    });
+
+    if (!drugConsumeTime) {
+      return res.status(404).json({
+        success: false,
+        code: "NOT_FOUND",
+        message: 'Drug Consume Time not found',
+      });
+    }
 
     if (!drugConsumeTime) {
       return res.status(404).json({
@@ -132,15 +174,21 @@ const updateDrugConsumeTime = async (req, res) => {
   }
 
   try {
-    const { id } = req.params;
+    const { id_drug_consume_time } = req.params;
     const updatedData = req.body;
+    
+    let drugConsumeTime = await DrugConsumeTime.findOne({
+      where: {
+        id_drug_consume_time,
+        status: "active",
+      }
+    });
 
-    const drugConsumeTime = await DrugConsumeTime.findByPk(id);
     if (!drugConsumeTime) {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
-        message: 'Drug consume time not found'
+        message: 'Drug Consume Time not found',
       });
     }
 
@@ -163,8 +211,13 @@ const updateDrugConsumeTime = async (req, res) => {
 // DELETE DrugConsumeTime by ID (Soft delete)
 const deleteDrugConsumeTime = async (req, res) => {
   try {
-    const { id } = req.params;
-    const drugConsumeTime = await DrugConsumeTime.findByPk(id);
+    const { id_drug_consume_time } = req.params;
+    let drugConsumeTime = await DrugConsumeTime.findOne({
+      where: {
+        id_drug_consume_time,
+        status: "active",
+      }
+    });
 
     if (!drugConsumeTime) {
       return res.status(404).json({
@@ -192,7 +245,7 @@ const deleteDrugConsumeTime = async (req, res) => {
 module.exports = {
   createDrugConsumeTime,
   getAllDrugConsumeTimes,
-  getDrugConsumeTimeById,
+  GetOneDrugConsumeTime,
   updateDrugConsumeTime,
   deleteDrugConsumeTime,
 };

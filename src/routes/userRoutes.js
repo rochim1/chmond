@@ -24,6 +24,7 @@ const chemoSchValidator = require('../validations/chemoSchValidator');
 const userSideEffectValidator = require('../validations/userSideEffectValidator');
 const monitoringLabValidator = require('../validations/monitoringLabValidator')
 const drugSchValidator = require('../validations/drugValidator')
+const drugConsumeValidator = require('../validations/drugConsumeValidator')
 
 // middleware
 const authMiddleware = require('../middlewares/authMiddleware')
@@ -96,14 +97,18 @@ apiRouter.put('/monitoring_lab/update/:id_monitoring_lab', authMiddleware, monit
 apiRouter.delete('/monitoring_lab/delete/:id_monitoring_lab', authMiddleware, monitoringLabController.deleteMonitorLab); // Delete user
 
 // drug schedule Route
-apiRouter.get('/drug_schedule/consume_time', authMiddleware, drugConsumeTimeController.getAllDrugConsumeTimes); // View all user
-
 apiRouter.get('/drug_schedule/with_date', authMiddleware, drugSchController.getAllDrugSchedulesWithDate); // View all user
 apiRouter.get('/drug_schedule', authMiddleware, drugSchController.getAllDrugSchedules); // View all user
 apiRouter.get('/drug_schedule/:id_drug_schedule', authMiddleware, drugSchController.getOneDrugSchdules); // View user
 apiRouter.post('/drug_schedule/create', authMiddleware, drugSchValidator, drugSchController.createDrugSchedule); // Create a new user
 apiRouter.put('/drug_schedule/update/:id_drug_schedule', authMiddleware, drugSchValidator, drugSchController.updateDrugSchedule); // Update a new user
 apiRouter.delete('/drug_schedule/delete/:id_drug_schedule', authMiddleware, drugSchController.deleteDrugSchedule); // Delete user
+
+apiRouter.get('/drug_consume_time', authMiddleware, drugConsumeTimeController.getAllDrugConsumeTimes); // View all user
+apiRouter.get('/drug_consume_time/:id_drug_consume_time', authMiddleware, drugConsumeTimeController.GetOneDrugConsumeTime); // View user
+apiRouter.post('/drug_consume_time/create', authMiddleware, drugConsumeValidator, drugConsumeTimeController.createDrugConsumeTime); // Create a new user
+apiRouter.put('/drug_consume_time/update/:id_drug_consume_time', authMiddleware, drugConsumeTimeController.updateDrugConsumeTime); // Update a new user
+apiRouter.delete('/drug_consume_time/delete/:id_drug_consume_time', authMiddleware, drugConsumeTimeController.deleteDrugConsumeTime); // Delete user
 
 module.exports = {
     apiRouter,

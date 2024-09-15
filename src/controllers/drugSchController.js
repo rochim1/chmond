@@ -9,6 +9,7 @@ const moment = require('moment');
 const {
   Op
 } = require('sequelize'); // Import Sequelize operators
+const drugConsumeTime = require('../models/drugConsumeTimeModel');
 // Create DrugSchedule
 const createDrugSchedule = async (req, res) => {
   const errors = validationResult(req);
@@ -385,14 +386,19 @@ const getAllDrugSchedulesWithDate = async (req, res) => {
       })
     };
 
-    let whereClauseConsume = {};
+    let whereClauseConsume = {
+      status: 'active'
+    };
+
     if (date_consume) {
       whereClauseConsume = {
+        ...whereClauseConsume,
         date: {
           [Op.eq]: date_consume, // Condition where date is greater than 2024-08-01
         }
       }
     }
+
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
@@ -435,6 +441,7 @@ const getAllDrugSchedulesWithDate = async (req, res) => {
         drug_consume_times: data.drug_consume_times,
       }
     });
+
     return res.status(200).json({
       success: true,
       totalItems: count,
@@ -597,11 +604,10 @@ const getOneDrugSchdules = async (req, res) => {
 
 // Soft-delete a DrugSchedule by ID (update the status to 'deleted')
 const deleteDrugSchedule = async (req, res) => {
-  const {
-    id_drug_schedule
-  } = req.params;
+  const { id_drug_schedule } = req.params;
 
   try {
+    // Find the active drug schedule
     const drugSchedule = await DrugSchedule.findOne({
       where: {
         id_drug_schedule,
@@ -617,15 +623,28 @@ const deleteDrugSchedule = async (req, res) => {
       });
     }
 
-    // Soft-delete by updating the status and adding a timestamp to deletedAt
+    // Soft-delete the drug schedule by updating its status and adding a timestamp to deletedAt
     await drugSchedule.update({
       status: 'deleted',
       deletedAt: new Date(),
     });
 
+    // Soft-delete the related drug consume times by updating their status and deletedAt
+    await drugConsumeTime.update(
+      {
+        status: 'deleted',
+        deletedAt: new Date(),
+      },
+      {
+        where: {
+          id_drug_schedule: id_drug_schedule
+        }
+      }
+    );
+
     return res.status(200).json({
       success: true,
-      message: 'Drug schedule deleted successfully',
+      message: 'Drug schedule and related consume times deleted successfully',
       data: drugSchedule
     });
   } catch (error) {
@@ -636,6 +655,7 @@ const deleteDrugSchedule = async (req, res) => {
     });
   }
 };
+
 
 module.exports = {
   createDrugSchedule,
