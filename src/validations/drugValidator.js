@@ -35,6 +35,9 @@ const drugScheduleValidationRules = [
 
   body('first_date_consume')
     .notEmpty().withMessage('first date consume is required'),
+  
+  body('long_consume')
+    .notEmpty().withMessage('long consume is required'),
 
   body('activate_notive')
     .isBoolean().withMessage('Activate notice must be a boolean')

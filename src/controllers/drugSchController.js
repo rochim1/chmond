@@ -76,22 +76,22 @@ const createDrugSchedule = async (req, res) => {
     });
 
     consume_time = JSON.parse(consume_time)
-    if (consume_time && consume_time.length && first_date_consume) {
+    if (consume_time && consume_time.length && first_date_consume && long_consume) {
       const startDate = moment(first_date_consume, 'YYYY-MM-DD');
-
       // Get the current date
-      const currentDate = moment(); // Today's date
+      const endDate = moment(first_date_consume, 'YYYY-MM-DD').add(parseInt(long_consume) - 1, 'days'); // Today's date
 
       // Create an array to store the dates
       let daysArray = [];
 
       // Loop through from the start date to the current date
       if (periode == 'setiap_hari') {
-        for (let date = startDate; date.isSameOrBefore(currentDate); date.add(1, 'days')) {
+        for (let date = startDate; date.isSameOrBefore(endDate); date.add(1, 'days')) {
+          console.log(date.format('YYYY-MM-DD'))
           daysArray.push(date.format('YYYY-MM-DD'));
         }
       } else if (periode == 'hari_pilihan') {
-        for (let date = startDate; date.isSameOrBefore(currentDate); date.add(1, 'days')) {
+        for (let date = startDate; date.isSameOrBefore(endDate); date.add(1, 'days')) {
           const dayOfWeek = date.day(); // Get the day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
 
           let numberOfWeek = []
@@ -157,6 +157,10 @@ const createDrugSchedule = async (req, res) => {
 const updateDrugSchedule = async (req, res) => {
   const errors = validationResult(req);
 
+  const {
+    id_drug_schedule
+  } = req.params;
+
   // If validation fails, return the errors
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -166,10 +170,7 @@ const updateDrugSchedule = async (req, res) => {
     });
   }
 
-  const {
-    id_drug_schedule
-  } = req.params;
-  const {
+  let {
     drug_name,
     dose,
     drug_unit,
@@ -181,32 +182,48 @@ const updateDrugSchedule = async (req, res) => {
     long_consume,
     activate_notive,
     note,
-    // status
     id_user,
-    day_number
+    day_number,
+    consume_time,
+    reset_all_times
   } = req.body;
 
-  if (choosen_days && choosen_days.length) {
+  if (!id_user) {
+    id_user = req.user.id_user;
+  }
+
+  if (periode == "setiap_hari") {
+    choosen_days = ''; // it means all days are chosen
+  }
+
+  if (periode !== "setiap_hari" && choosen_days && choosen_days.length) {
     choosen_days = JSON.stringify(choosen_days);
   }
 
+  if (consume_time && consume_time.length) {
+    consume_time = JSON.stringify(consume_time);
+  }
+
   try {
-    const drugSchedule = await DrugSchedule.findOne({
+    // Find the existing schedule by id
+    let existingDrugSchedule = await DrugSchedule.findOne({
       where: {
         id_drug_schedule,
-        status: "active",
-      },
+        id_user,
+        status: 'active'
+      }
     });
 
-    if (!drugSchedule) {
+    if (!existingDrugSchedule) {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
-        message: 'Drug schedule not found'
+        message: "Drug schedule not found",
       });
     }
 
-    await drugSchedule.update({
+    // Update the drug schedule details
+    await existingDrugSchedule.update({
       drug_name,
       dose,
       drug_unit,
@@ -218,15 +235,90 @@ const updateDrugSchedule = async (req, res) => {
       long_consume,
       activate_notive,
       note,
-      // status
-      id_user,
-      day_number
+      day_number,
+      consume_time
     });
+
+    consume_time = JSON.parse(consume_time);
+    if (consume_time && consume_time.length && first_date_consume && long_consume) {
+      const startDate = moment(first_date_consume, 'YYYY-MM-DD');
+      const endDate = moment(first_date_consume, 'YYYY-MM-DD').add(parseInt(long_consume) - 1, 'days');
+
+      let daysArray = [];
+
+      if (periode == 'setiap_hari') {
+        for (let date = startDate; date.isSameOrBefore(endDate); date.add(1, 'days')) {
+          daysArray.push(date.format('YYYY-MM-DD'));
+        }
+      } else if (periode == 'hari_pilihan') {
+        for (let date = startDate; date.isSameOrBefore(endDate); date.add(1, 'days')) {
+          const dayOfWeek = date.day();
+
+          let numberOfWeek = [];
+          let daysName = JSON.parse(choosen_days);
+          if (daysName && daysName.length) {
+            const days = {
+              'minggu': 0,
+              'senin': 1,
+              'selasa': 2,
+              'rabu': 3,
+              'kamis': 4,
+              'jumat': 5,
+              'sabtu': 6
+            };
+
+            daysName.forEach(dayName => {
+              let numDay = days[dayName.toLowerCase()];
+              if (numDay !== undefined) {
+                numberOfWeek.push(numDay);
+              }
+            });
+          }
+
+          if (numberOfWeek.includes(dayOfWeek)) {
+            daysArray.push(date.format('YYYY-MM-DD'));
+          }
+        }
+      }
+
+      // Remove previous consume times before adding new ones
+      if (reset_all_times) {
+        await DrugConsumeTime.destroy({
+          where: {
+            id_drug_schedule
+          }
+        });
+      } else {
+        await DrugConsumeTime.destroy({
+          where: {
+            date: {
+              [Op.in]: daysArray // Use square brackets to access `Op.in`
+            }
+          }
+        });
+      }
+
+      for (const date of daysArray) {
+        for (const time of consume_time) {
+          await DrugConsumeTime.create({
+            id_drug_schedule: existingDrugSchedule.id_drug_schedule,
+            name: existingDrugSchedule.drug_name,
+            time: time,
+            id_user: id_user,
+            date: date,
+            is_consumed: false
+          });
+        }
+      }
+    }
+
+    existingDrugSchedule.consume_time = existingDrugSchedule.consume_time ? JSON.parse(existingDrugSchedule.consume_time) : [];
+    existingDrugSchedule.choosen_days = existingDrugSchedule.choosen_days ? JSON.parse(existingDrugSchedule.choosen_days) : [];
 
     return res.status(200).json({
       success: true,
       message: 'Drug schedule updated successfully',
-      data: drugSchedule
+      data: existingDrugSchedule
     });
   } catch (error) {
     return res.status(500).json({
@@ -236,6 +328,7 @@ const updateDrugSchedule = async (req, res) => {
     });
   }
 };
+
 
 const getAllDrugSchedulesWithDate = async (req, res) => {
   try {
@@ -255,13 +348,13 @@ const getAllDrugSchedulesWithDate = async (req, res) => {
         date_consume
     } = req.body && req.body.filter ? req.body.filter : {};
 
-    if (!date_consume) {
-      return res.status(400).json({
-        success: false,
-        code: "BAD_REQUEST",
-        message: 'Date consume is required',
-      });
-    }
+    // if (!date_consume) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     code: "BAD_REQUEST",
+    //     message: 'Date consume is required',
+    //   });
+    // }
     // Build the where clause with optional filters
     let whereClause = {
       status, // Include status in the filter by default
