@@ -10,6 +10,7 @@ const recomendationController = require('../controllers/recomendationController'
 const monitoringLabController = require('../controllers/monitoringLabController');
 const drugSchController = require('../controllers/drugSchController');
 const drugConsumeTimeController = require('../controllers/drugConsumeTimeController');
+const notificationController = require('../controllers/notificationController');
 
 // validator
 const userValidator = require('../validations/userValidator');
@@ -29,6 +30,7 @@ const drugConsumeValidator = require('../validations/drugConsumeValidator')
 // middleware
 const authMiddleware = require('../middlewares/authMiddleware')
 const uploadMiddleware = require('../middlewares/uploadMiddleware');
+const validateFcm = require('../validations/fcmValidator');
 
 
 
@@ -109,6 +111,10 @@ apiRouter.get('/drug_consume_time/:id_drug_consume_time', authMiddleware, drugCo
 apiRouter.post('/drug_consume_time/create', authMiddleware, drugConsumeValidator, drugConsumeTimeController.createDrugConsumeTime); // Create a new user
 apiRouter.put('/drug_consume_time/update/:id_drug_consume_time', authMiddleware, drugConsumeTimeController.updateDrugConsumeTime); // Update a new user
 apiRouter.delete('/drug_consume_time/delete/:id_drug_consume_time', authMiddleware, drugConsumeTimeController.deleteDrugConsumeTime); // Delete user
+
+// fcm token route
+apiRouter.post('/fcm/store', authMiddleware, validateFcm, notificationController.storeFCMtoken); // Create a new user
+
 
 module.exports = {
     apiRouter,

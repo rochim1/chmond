@@ -78,6 +78,10 @@ const Users = sequelize.define('users', {
     type: DataTypes.STRING(150),
     allowNull: true,
   },
+  fcm_token: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
   role: {
     type: DataTypes.ENUM('user', 'admin'),
     defaultValue: 'user',

@@ -30,14 +30,15 @@ const drugScheduleValidationRules = [
     .isIn(['sebelum_makan', 'sesudah_makan', 'tidak_ada_aturan']).withMessage('Invalid consume regulation')
     .notEmpty().withMessage('Consume regulation is required'),
 
-  body('consume_time')
-    .notEmpty().withMessage('consume_time is required'),
+  // bila tidak di isi akan di asumsikan selama 1 bulan
+  // body('consume_time')
+  //   .notEmpty().withMessage('consume_time is required'),
 
-  body('first_date_consume')
-    .notEmpty().withMessage('first date consume is required'),
+  // body('first_date_consume')
+  //   .notEmpty().withMessage('first date consume is required'),
   
-  body('long_consume')
-    .notEmpty().withMessage('long consume is required'),
+  // body('long_consume')
+  //   .notEmpty().withMessage('long consume is required'),
 
   body('activate_notive')
     .isBoolean().withMessage('Activate notice must be a boolean')
