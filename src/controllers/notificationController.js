@@ -24,7 +24,7 @@ const storeFCMtoken = async (req, res) => {
             });
         }
 
-        const {
+        let {
             id_user,
             fcm_token
         } = req.body;
