@@ -76,6 +76,17 @@ const createDrugSchedule = async (req, res) => {
       consume_time
     });
 
+    if (!first_date_consume) {
+      // Assign a specific date if first_date_consume is not provided
+      first_date_consume = moment().format('YYYY-MM-DD'); // Current date
+    }
+    
+    if (long_consume) {
+      // Calculate the number of days from the first consumption date to the last day of the current month
+      const last_day_of_month = moment().endOf('month'); // Get the last day of the current month
+      long_consume = last_day_of_month.diff(moment(first_date_consume, 'YYYY-MM-DD'), 'days'); // Calculate the difference in days
+    }
+
     consume_time = JSON.parse(consume_time)
     if (consume_time && consume_time.length && first_date_consume && long_consume) {
       const startDate = moment(first_date_consume, 'YYYY-MM-DD');

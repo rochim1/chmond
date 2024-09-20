@@ -1,5 +1,6 @@
 const { validationResult } = require("express-validator");
 const ChemoSchedule = require("../models/chemoSchModel");
+const cronController = require("./cronController");
 
 const createChemoSchedule = async (req, res) => {
   try {
@@ -38,6 +39,8 @@ const createChemoSchedule = async (req, res) => {
       id_user,
       note,
     });
+
+    await cronController.scheduleNotification(newChemoSchedule);
 
     return res.status(201).json({
       success: true,

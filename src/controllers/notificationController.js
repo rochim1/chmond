@@ -73,7 +73,6 @@ const storeFCMtoken = async (req, res) => {
     }
 };
 
-
 module.exports = {
     storeFCMtoken,
 };
