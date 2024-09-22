@@ -3,6 +3,7 @@ const {
 } = require("express-validator");
 const ChemoSchedule = require("../models/chemoSchModel");
 const cronController = require("./cronController");
+const moment = require('moment');
 
 const createChemoSchedule = async (req, res) => {
   try {
@@ -42,7 +43,12 @@ const createChemoSchedule = async (req, res) => {
       note,
     });
 
-    await cronController.scheduleNotification(newChemoSchedule, 'chemotherapy');
+    const notifTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes');
+    if (notifTime.isSameOrAfter(moment())) {
+      await cronController.scheduleNotification(newChemoSchedule, 'chemotherapy');
+    } else {
+      // do something in the future
+    }
 
     return res.status(201).json({
       success: true,
@@ -105,7 +111,7 @@ const updateChemoSchedule = async (req, res) => {
         },
       });
     }
-    
+
     if (scheduleToUpdate.is_sent) {
       return res.status(403).json({
         success: false,
@@ -116,27 +122,27 @@ const updateChemoSchedule = async (req, res) => {
       });
     }
 
-    let isTimeUpdated = false;
     if (scheduleToUpdate.waktu_kemoterapi !== waktu_kemoterapi || scheduleToUpdate.tanggal_kemoterapi !== tanggal_kemoterapi) {
-      isTimeUpdated = true;
-
-      const updateTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm');
-      const passedTime = updateTime.isSameOrBefore(moment());
+      const notifTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes');
+      const passedTime = notifTime.isBefore(moment()); // Check if updateTime is in the past or the same as now
 
       if (passedTime) {
-        return res.status(403).json({
-          success: false,
-          code: "FORBIDDEN",
-          error: {
-            message: "cant update time become passed",
-          },
-        });
-      } 
+        // return res.status(403).json({
+        //   success: false,
+        //   code: "FORBIDDEN",
+        //   error: {
+        //     message: "Cannot update to a time that has already passed",
+        //   },
+        // });
+        // still can update to past, but cron job is deleted
+        cronController.stopScheduledJob(scheduleToUpdate ,'chemotherapy')
+      }
     }
 
     if (!id_user) {
       id_user = scheduleToUpdate.id_user || req.user.id_user;
     }
+    
     // Find and update the ChemoSchedule
     const [updated] = await ChemoSchedule.update({
       tujuan_kemoterapi,
@@ -220,7 +226,7 @@ const deleteChemoSchedule = async (req, res) => {
     });
 
     cronController.stopScheduledJob(chemoSchedule, 'chemotherapy');
-    
+
     return res.status(200).json({
       success: true,
       message: "ChemoSchedule deleted successfully",

@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const User = require('./userModel');
 
-const notification_sent = sequelize.define('notification_sent', {
+const notificationSent = sequelize.define('notification_sent', {
   id_notification_sent: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -10,12 +10,10 @@ const notification_sent = sequelize.define('notification_sent', {
   },
   title: {
     type: DataTypes.STRING(100),
-    unique: true,
     allowNull: true,
   },
   body: {
     type: DataTypes.STRING(255),
-    unique: true,
     allowNull: true,
   },
   receiver: {
@@ -28,12 +26,10 @@ const notification_sent = sequelize.define('notification_sent', {
   },
   sender: {
     type: DataTypes.STRING(255),
-    unique: true,
     allowNull: true,
   },
   tipe: {
     type: DataTypes.STRING(20),
-    unique: true,
     allowNull: true,
   },
   status: {
@@ -50,4 +46,4 @@ const notification_sent = sequelize.define('notification_sent', {
   timestamps: true,
 });
 
-module.exports = notification_sent;
+module.exports = notificationSent;

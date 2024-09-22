@@ -6,6 +6,7 @@ const {
     DrugSchedule,
     DrugConsumeTime
 } = require('../models/index');
+const notificationSent = require('../models/notificationSentModel');
 
 const listCronJobs = [{
     trigger_name: "consume_drug_notif",
@@ -85,7 +86,8 @@ const triggerChemoTerapyNotif = async (req, res) => {
                     ['id_chemoSchedule', 'ASC']
                 ],
                 where: {
-                    status: 'active'
+                    status: 'active',
+                    is_sent: false
                 }
             });
 
@@ -123,7 +125,8 @@ const triggerDrugNotif = async (req, res) => {
                     ['id_drug_consume_time', 'ASC']
                 ],
                 where: {
-                    status: 'active'
+                    status: 'active',
+                    is_sent: false
                 },
                 // include: [{
                 //     model: DrugSchedule,
@@ -159,8 +162,10 @@ const scheduleNotification = async (schedule, tipe) => {
         let job;
         if (tipe == 'chemotherapy') {
 
-            const chemoDateTime = moment(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm');
-
+            let chemoDateTime = moment(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm');
+            if (schedule.remember_before_minutes) {
+                chemoDateTime = chemoDateTime.subtract(schedule.remember_before_minutes, 'minutes');
+            }
             // Format the datetime to match the cron format (seconds minutes hours day month day-of-week)
             const notificationTime = chemoDateTime.format('s m H D M *');
 
@@ -189,7 +194,7 @@ const scheduleNotification = async (schedule, tipe) => {
 
             drug_jobs[schedule.id_drug_consume_time] = job;
         }
-        
+
         // Return the job instance if needed
         return job;
 
@@ -223,6 +228,7 @@ const stopAllJobs = (tipe) => {
                 console.log(`Job for chemo schedule ${scheduleId} stopped`);
             }
         });
+        
         Object.keys(chemo_jobs).forEach(scheduleId => delete chemo_jobs[scheduleId]);
     } else if (tipe == 'drug_consume_time') {
         Object.keys(drug_jobs).forEach(scheduleId => {
@@ -244,11 +250,51 @@ const updateNotificationSchedule = async (schedule, tipe = 'chemotherapy') => {
 };
 
 // Function to send notifications (SMS, Email, Push Notification, etc.)
-const sendNotification = (schedule, tipe) => {
-    if (tipe == 'chemotherapy') {
-        console.log(`Sending chemotherapy reminder to user: ${schedule.id_user} for schedule ID: ${schedule.id_chemoSchedule}`);
-    } else if (tipe == 'drug_consume_time') {
-        console.log(`Sending drug consume time reminder`);
+const sendNotification = async (schedule, tipe) => {
+    try {
+        if (tipe == 'chemotherapy') {
+
+            const notification = await notificationSent.create({
+                title: 'pengingat jadwal kemoterapi',
+                body: '30 menit lagi jadwal kemoterapi anda di RS',
+                receiver: schedule.id_user,
+                sender: 'system',
+                tipe: 'chemotherapy'
+            })
+
+            await ChemoSchedule.update({
+                is_sent: true
+            }, {
+                where: {
+                    id_chemoSchedule: schedule.id_chemoSchedule
+                }
+            });
+
+            stopScheduledJob(schedule, 'chemotherapy');
+            console.log(`Sending chemotherapy reminder to user: ${schedule.id_user} for schedule ID: ${schedule.id_chemoSchedule}`);
+        } else if (tipe == 'drug_consume_time') {
+
+            const notification = await notificationSent.create({
+                title: 'pengingat jadwal minum obat',
+                body: '30 menit lagi jadwal and minum obat',
+                receiver: schedule.id_user,
+                sender: 'system',
+                tipe: 'drug_consume_time'
+            })
+
+            await DrugConsumeTime.update({
+                is_sent: true
+            }, {
+                where: {
+                    id_drug_consume_time: schedule.id_drug_consume_time
+                }
+            });
+
+            stopScheduledJob(schedule, 'drug_consume_time');
+            console.log(`Sending drug consume time reminder`);
+        }
+    } catch (error) {
+        console.log('failed to send message', error);
     }
 };
 
@@ -268,4 +314,5 @@ module.exports = {
     scheduleNotification,
     updateNotificationSchedule,
     sendNotification,
+    stopScheduledJob
 };

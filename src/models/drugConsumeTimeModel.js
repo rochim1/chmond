@@ -44,6 +44,11 @@ const drugConsumeTime = sequelize.define('drug_consume_time', {
     allowNull: false,
     defaultValue: false
   },
+  is_sent: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: false,
+  },
   status: {
     type: DataTypes.ENUM('active', 'deleted'),
     defaultValue: 'active',
