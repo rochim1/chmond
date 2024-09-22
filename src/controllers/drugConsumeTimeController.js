@@ -9,6 +9,7 @@ const moment = require('moment');
 const {
   Op
 } = require('sequelize'); // Import Sequelize operators
+const cronController = require('./cronController');
 
 // not used now
 // CREATE DrugConsumeTime
@@ -43,7 +44,7 @@ const createDrugConsumeTime = async (req, res) => {
       });
     }
     
-    name = name ?? drugSchedule.name;
+    name = name || drugSchedule.name;
     const newDrugConsumeTime = await DrugConsumeTime.create({
       id_drug_schedule,
       name,
@@ -51,6 +52,8 @@ const createDrugConsumeTime = async (req, res) => {
       id_user,
       date
     });
+
+    cronController.scheduleNotification(newDrugConsumeTime, 'drug_consume_time');
 
     return res.status(201).json({
       success: true,
@@ -194,6 +197,15 @@ const updateDrugConsumeTime = async (req, res) => {
 
     await drugConsumeTime.update(updatedData);
 
+    drugConsumeTime = await DrugConsumeTime.findOne({
+      where: {
+        id_drug_consume_time,
+        status: "active",
+      }
+    });
+
+    cronController.updateNotificationSchedule(drugConsumeTime, 'drug_consume_time')
+
     return res.status(200).json({
       success: true,
       message: 'Drug consume time updated successfully',
@@ -229,6 +241,8 @@ const deleteDrugConsumeTime = async (req, res) => {
 
     await drugConsumeTime.update({ status: 'deleted', deletedAt: new Date() });
 
+    cronController.stopScheduledJob(id_drug_consume_time, 'drug_consume_time');
+    
     return res.status(200).json({
       success: true,
       message: 'Drug consume time deleted successfully',

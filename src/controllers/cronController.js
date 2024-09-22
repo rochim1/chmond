@@ -245,7 +245,12 @@ const stopAllJobs = (tipe) => {
 };
 // Function to update notification schedule
 const updateNotificationSchedule = async (schedule, tipe = 'chemotherapy') => {
-    stopScheduledJob(schedule.id_chemoSchedule, tipe);
+    if (tipe == 'chemotherapy') {
+        stopScheduledJob(schedule.id_chemoSchedule, tipe);
+    } else if (tipe == 'drug_consume_time') {
+        stopScheduledJob(schedule.id_drug_consume_time, tipe);
+    }
+    
     await scheduleNotification(schedule, tipe);
 };
 
