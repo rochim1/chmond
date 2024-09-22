@@ -28,6 +28,11 @@ const ChemoSchedule = sequelize.define('chemo_schedules', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  is_sent: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: false,
+  },
   id_user: {
     type: DataTypes.UUID,
     references: {

@@ -1,4 +1,6 @@
-const { validationResult } = require("express-validator");
+const {
+  validationResult
+} = require("express-validator");
 const ChemoSchedule = require("../models/chemoSchModel");
 const cronController = require("./cronController");
 
@@ -40,7 +42,7 @@ const createChemoSchedule = async (req, res) => {
       note,
     });
 
-    await cronController.scheduleNotification(newChemoSchedule);
+    await cronController.scheduleNotification(newChemoSchedule, 'chemotherapy');
 
     return res.status(201).json({
       success: true,
@@ -61,7 +63,9 @@ const createChemoSchedule = async (req, res) => {
 
 const updateChemoSchedule = async (req, res) => {
   try {
-    const { id_chemoSchedule } = req.params;
+    const {
+      id_chemoSchedule
+    } = req.params;
 
     // Validate request
     const errors = validationResult(req);
@@ -101,27 +105,52 @@ const updateChemoSchedule = async (req, res) => {
         },
       });
     }
+    
+    if (scheduleToUpdate.is_sent) {
+      return res.status(403).json({
+        success: false,
+        code: "FORBIDDEN",
+        error: {
+          message: "sorry can't update, notif is sent",
+        },
+      });
+    }
+
+    let isTimeUpdated = false;
+    if (scheduleToUpdate.waktu_kemoterapi !== waktu_kemoterapi || scheduleToUpdate.tanggal_kemoterapi !== tanggal_kemoterapi) {
+      isTimeUpdated = true;
+
+      const updateTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm');
+      const passedTime = updateTime.isSameOrBefore(moment());
+
+      if (passedTime) {
+        return res.status(403).json({
+          success: false,
+          code: "FORBIDDEN",
+          error: {
+            message: "cant update time become passed",
+          },
+        });
+      } 
+    }
 
     if (!id_user) {
       id_user = scheduleToUpdate.id_user || req.user.id_user;
     }
     // Find and update the ChemoSchedule
-    const [updated] = await ChemoSchedule.update(
-      {
-        tujuan_kemoterapi,
-        tanggal_kemoterapi,
-        waktu_kemoterapi,
-        remember_before_minutes,
-        id_user,
-        notes,
+    const [updated] = await ChemoSchedule.update({
+      tujuan_kemoterapi,
+      tanggal_kemoterapi,
+      waktu_kemoterapi,
+      remember_before_minutes,
+      id_user,
+      notes,
+    }, {
+      where: {
+        id_chemoSchedule,
+        status: "active",
       },
-      {
-        where: {
-          id_chemoSchedule,
-          status: "active",
-        },
-      }
-    );
+    });
 
     if (!updated) {
       return res.status(404).json({
@@ -141,6 +170,9 @@ const updateChemoSchedule = async (req, res) => {
       },
     });
 
+    // async
+    cronController.updateNotificationSchedule(updatedChemoSchedule, 'chemotherapy');
+
     return res.status(200).json({
       success: true,
       message: "ChemoSchedule updated successfully",
@@ -159,7 +191,9 @@ const updateChemoSchedule = async (req, res) => {
 
 const deleteChemoSchedule = async (req, res) => {
   try {
-    const { id_chemoSchedule } = req.params;
+    const {
+      id_chemoSchedule
+    } = req.params;
 
     // Find the ChemoSchedule to delete
     const chemoSchedule = await ChemoSchedule.findOne({
@@ -185,6 +219,8 @@ const deleteChemoSchedule = async (req, res) => {
       deletedAt: new Date(),
     });
 
+    cronController.stopScheduledJob(chemoSchedule, 'chemotherapy');
+    
     return res.status(200).json({
       success: true,
       message: "ChemoSchedule deleted successfully",
@@ -202,7 +238,9 @@ const deleteChemoSchedule = async (req, res) => {
 
 const getOneChemoSchedule = async (req, res) => {
   try {
-    const { id_chemoSchedule } = req.params;
+    const {
+      id_chemoSchedule
+    } = req.params;
 
     const chemoSchedule = await ChemoSchedule.findOne({
       where: {
@@ -238,18 +276,30 @@ const getOneChemoSchedule = async (req, res) => {
 
 const getAllChemoSchedules = async (req, res) => {
   try {
-    const { page = 1, pageSize = 10 } = req.body;
-    let { status, id_user } =
-      req.body && req.body.filter ? req.body.filter : { status: "active" };
+    const {
+      page = 1, pageSize = 10
+    } = req.body;
+    let {
+      status,
+      id_user
+    } =
+    req.body && req.body.filter ? req.body.filter : {
+      status: "active"
+    };
 
     let whereClause = {
       status,
-      ...(id_user && { id_user }), // Add id_user to the filter if it exists
+      ...(id_user && {
+        id_user
+      }), // Add id_user to the filter if it exists
     };
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const { count, rows } = await ChemoSchedule.findAndCountAll({
+    const {
+      count,
+      rows
+    } = await ChemoSchedule.findAndCountAll({
       where: whereClause,
       offset,
       limit,
