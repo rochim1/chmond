@@ -17,6 +17,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 initializeCronJobs()
 
 app.use('/uploads/thumbnails', express.static(path.join(__dirname, '..', 'uploads', 'thumbnails')));
+app.use('api/uploads/thumbnails', express.static(path.join(__dirname, '..', 'uploads', 'thumbnails')));
+
 app.use('/api', userRoutes.apiRouter);
 app.use(userRoutes.api);
 
