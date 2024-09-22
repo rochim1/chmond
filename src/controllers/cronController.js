@@ -167,7 +167,7 @@ const scheduleNotification = async (schedule, tipe) => {
                 chemoDateTime = chemoDateTime.subtract(schedule.remember_before_minutes, 'minutes');
             }
             // Format the datetime to match the cron format (seconds minutes hours day month day-of-week)
-            const notificationTime = chemoDateTime.format('s m H D M *');
+            const notificationTime = chemoDateTime.format('s m H D M * YYYY');
 
             // Schedule a job based on the user's notification time
             job = cron.schedule(notificationTime, () => {
@@ -184,7 +184,7 @@ const scheduleNotification = async (schedule, tipe) => {
 
             const drugConsumeTime = moment(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm');
 
-            const notificationTime = drugConsumeTime.format('s m H D M *');
+            const notificationTime = drugConsumeTime.format('s m H D M * YYYY');
 
             // Schedule a job based on the user's notification time
             job = cron.schedule(notificationTime, () => {

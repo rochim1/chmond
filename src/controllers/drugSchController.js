@@ -10,6 +10,8 @@ const {
   Op
 } = require('sequelize'); // Import Sequelize operators
 const drugConsumeTime = require('../models/drugConsumeTimeModel');
+const cronController = require('./cronController');
+
 // Create DrugSchedule
 const createDrugSchedule = async (req, res) => {
   const errors = validationResult(req);
@@ -80,7 +82,7 @@ const createDrugSchedule = async (req, res) => {
       // Assign a specific date if first_date_consume is not provided
       first_date_consume = moment().format('YYYY-MM-DD'); // Current date
     }
-    
+
     if (long_consume) {
       // Calculate the number of days from the first consumption date to the last day of the current month
       const last_day_of_month = moment().endOf('month'); // Get the last day of the current month
@@ -146,6 +148,11 @@ const createDrugSchedule = async (req, res) => {
             date: date,
             is_consumed: false
           })
+
+          const drugConsumeTime = moment(`${drugConsumeList.date} ${drugConsumeList.time}`, 'YYYY-MM-DD HH:mm');
+          if (drugConsumeTime.isSameOrAfter()) {
+            cronController.scheduleNotification(drugConsumeList, 'drug_consume_time');
+          }
         }
       }
     }
@@ -293,6 +300,18 @@ const updateDrugSchedule = async (req, res) => {
         }
       }
 
+      const currentDrugConsume = await DrugConsumeTime.findAll({
+        where: {
+          id_drug_schedule: existingDrugSchedule.id_drug_schedule,
+          status: 'active'
+        },
+        attributes: ['id_drug_consume_time'], // Specify the fields you want to retrieve
+      });
+
+      currentDrugConsume.map(consume => {
+        cronController.stopScheduledJob(consume.id_drug_consume_time, 'drug_consume_time')
+      });
+
       // Remove previous consume times before adding new ones
       if (reset_all_times) {
         await DrugConsumeTime.destroy({
@@ -305,7 +324,8 @@ const updateDrugSchedule = async (req, res) => {
           where: {
             date: {
               [Op.in]: daysArray // Use square brackets to access `Op.in`
-            }
+            },
+            is_sent: false
           }
         });
       }
@@ -322,6 +342,22 @@ const updateDrugSchedule = async (req, res) => {
           });
         }
       }
+
+      const newCurrentDrugConsume = await DrugConsumeTime.findAll({
+        where: {
+          id_drug_schedule: existingDrugSchedule.id_drug_schedule,
+          status: 'active'
+        },
+        attributes: ['id_drug_consume_time'], // Specify the fields you want to retrieve
+      });
+
+      newCurrentDrugConsume.map(consume => {
+        const drugConsumeTime = moment(`${consume.date} ${consume.time}`, 'YYYY-MM-DD HH:mm');
+        if (drugConsumeTime.isSameOrAfter()) {
+          cronController.scheduleNotification(consume, 'drug_consume_time');
+        }
+      });
+
     }
 
     existingDrugSchedule.consume_time = existingDrugSchedule.consume_time ? JSON.parse(existingDrugSchedule.consume_time) : [];
@@ -615,7 +651,9 @@ const getOneDrugSchdules = async (req, res) => {
 
 // Soft-delete a DrugSchedule by ID (update the status to 'deleted')
 const deleteDrugSchedule = async (req, res) => {
-  const { id_drug_schedule } = req.params;
+  const {
+    id_drug_schedule
+  } = req.params;
 
   try {
     // Find the active drug schedule
@@ -641,17 +679,26 @@ const deleteDrugSchedule = async (req, res) => {
     });
 
     // Soft-delete the related drug consume times by updating their status and deletedAt
-    await drugConsumeTime.update(
-      {
-        status: 'deleted',
-        deletedAt: new Date(),
-      },
-      {
-        where: {
-          id_drug_schedule: id_drug_schedule
-        }
+    await drugConsumeTime.update({
+      status: 'deleted',
+      deletedAt: new Date(),
+    }, {
+      where: {
+        id_drug_schedule: id_drug_schedule
       }
-    );
+    });
+
+    const currentDrugConsume = await DrugConsumeTime.findAll({
+      where: {
+        id_drug_schedule: id_drug_schedule,
+        status: 'deleted'
+      },
+      attributes: ['id_drug_consume_time'], // Specify the fields you want to retrieve
+    });
+
+    currentDrugConsume.map(consume => {
+      cronController.stopScheduledJob(consume.id_drug_consume_time, 'drug_consume_time')
+    });
 
     return res.status(200).json({
       success: true,
