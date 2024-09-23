@@ -7,6 +7,8 @@ const {
     DrugConsumeTime
 } = require('../models/index');
 const notificationSent = require('../models/notificationSentModel');
+const notificationController = require('./notificationController');
+const Users = require('../models/userModel');
 
 const listCronJobs = [{
     trigger_name: "consume_drug_notif",
@@ -257,15 +259,37 @@ const updateNotificationSchedule = async (schedule, tipe = 'chemotherapy') => {
 // Function to send notifications (SMS, Email, Push Notification, etc.)
 const sendNotification = async (schedule, tipe) => {
     try {
+
+        const user = Users.findOne({
+            where: {
+                id_user: schedule.id_user,
+                status: 'active'
+            }
+        })
+
+        if (!user || (user && !user.fcm_token)) {
+            return false;
+        }
+
+
         if (tipe == 'chemotherapy') {
 
-            const notification = await notificationSent.create({
+            const attribute = {
+                fcm_token: user.fcm_token,
                 title: 'pengingat jadwal kemoterapi',
                 body: '30 menit lagi jadwal kemoterapi anda di RS',
                 receiver: schedule.id_user,
                 sender: 'system',
-                tipe: 'chemotherapy'
-            })
+                tipe: 'chemotherapy',
+                attribute: {
+                    id: schedule.id_chemoSchedule,
+                    link: '/notification'
+                }
+            }
+
+            notificationController.pushNotification(attribute)
+
+            const notification = await notificationSent.create(attribute)
 
             await ChemoSchedule.update({
                 is_sent: true
@@ -279,13 +303,22 @@ const sendNotification = async (schedule, tipe) => {
             console.log(`Sending chemotherapy reminder to user: ${schedule.id_user} for schedule ID: ${schedule.id_chemoSchedule}`);
         } else if (tipe == 'drug_consume_time') {
 
-            const notification = await notificationSent.create({
+            const attribute = {
+                fcm_token: user.fcm_token,
                 title: 'pengingat jadwal minum obat',
                 body: '30 menit lagi jadwal and minum obat',
                 receiver: schedule.id_user,
                 sender: 'system',
-                tipe: 'drug_consume_time'
-            })
+                tipe: 'drug_consume_time',
+                attribute: {
+                    id: schedule.id_drug_consume_time,
+                    link: '/notification'
+                }
+            }
+
+            notificationController.pushNotification(attribute)
+
+            const notification = await notificationSent.create(attribute)
 
             await DrugConsumeTime.update({
                 is_sent: true
