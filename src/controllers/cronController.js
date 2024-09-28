@@ -277,7 +277,7 @@ const sendNotification = async (schedule, tipe) => {
             const attribute = {
                 fcm_token: user.fcm_token,
                 title: 'pengingat jadwal kemoterapi',
-                body: `Sesi kemoterapi Anda akan dimulai dalam ${schedule.remember_before_minutes} menit. Siapkan diri Anda dengan baik.`,
+                body: `Sesi kemoterapi Anda akan dimulai dalam ${schedule.remember_before_minutes || 0 } menit. Siapkan diri Anda dengan baik.`,
                 receiver: schedule.id_user,
                 sender: 'system',
                 tipe: 'chemotherapy',
@@ -306,7 +306,7 @@ const sendNotification = async (schedule, tipe) => {
             const attribute = {
                 fcm_token: user.fcm_token,
                 title: 'pengingat jadwal minum obat',
-                body: `Saatnya minum obat ${schedule.name}! Jangan lupa untuk menjaga kesehatan dengan mengikuti jadwal obat Anda.`,
+                body: `Saatnya minum obat ${schedule.name || ''}! Jangan lupa untuk menjaga kesehatan dengan mengikuti jadwal obat Anda.`,
                 receiver: schedule.id_user,
                 sender: 'system',
                 tipe: 'drug_consume_time',
