@@ -93,6 +93,7 @@ apiRouter.delete('/user_side_effect/delete/:id_user_side_effect', authMiddleware
 
 // monitoring laboratorium Route
 apiRouter.get('/monitoring_lab', authMiddleware, monitoringLabController.getAllMonitoringLab); // View all user
+apiRouter.get('/monitoring_lab/chart', authMiddleware, monitoringLabController.getAllMonitoringLabChart); // View all user
 apiRouter.get('/monitoring_lab/:id_monitoring_lab', authMiddleware, monitoringLabController.getOneMonitorLab); // View user
 apiRouter.post('/monitoring_lab/create', authMiddleware, monitoringLabValidator, monitoringLabController.createMonitorLab); // Create a new user
 apiRouter.put('/monitoring_lab/update/:id_monitoring_lab', authMiddleware, monitoringLabValidator, monitoringLabController.updateMonitorLab); // Update a new user

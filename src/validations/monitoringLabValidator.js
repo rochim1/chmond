@@ -2,6 +2,7 @@ const { body } = require('express-validator');
 
 const monitoringLabValidator = [
   body('id_user')
+    .optional()
     .isUUID()
     .withMessage('id_user must be a valid UUID'),
   
