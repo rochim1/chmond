@@ -4,15 +4,24 @@ const UserLogAccessModel = require("../models/userLogAccessModel"); // Adjust th
 const bcrypt = require("bcryptjs"); // For hashing passwords
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
-const { sendEmailFunction } = require("../mail_templates/index");
+const {
+  sendEmailFunction
+} = require("../mail_templates/index");
 
-const { validationResult } = require("express-validator"); // For request validation
-const { loginWithGoogle } = require("../utils/userUtilities");
+const {
+  validationResult
+} = require("express-validator"); // For request validation
+const {
+  loginWithGoogle
+} = require("../utils/userUtilities");
 const jwt = require("jsonwebtoken");
+const validator = require('validator');
 
 const getOneUsers = async (req, res) => {
   try {
-    const { id_user } = req.params;
+    const {
+      id_user
+    } = req.params;
 
     if (!id_user) {
       res.status(400).json({
@@ -58,13 +67,16 @@ const getOneUsers = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const { page = 1, pageSize = 10 } = req.body;
-    const { status } =
-      req.body && req.body.filter
-        ? req.body.filter
-        : {
-            status: "active",
-          };
+    const {
+      page = 1, pageSize = 10
+    } = req.body;
+    const {
+      status
+    } =
+    req.body && req.body.filter ?
+      req.body.filter : {
+        status: "active",
+      };
 
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
@@ -98,7 +110,12 @@ const getAllUsers = async (req, res) => {
 const login = async (req, res) => {
   try {
     // Extract user data from request
-    const { email, password, infinite_token, remember_me } = req.body;
+    const {
+      email,
+      password,
+      infinite_token,
+      remember_me
+    } = req.body;
 
     // Validate request
     const errors = validationResult(req);
@@ -108,13 +125,41 @@ const login = async (req, res) => {
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({
-      where: {
-        email,
-        status: "active",
-      },
-    });
+    let emailOrNumberPhone;
+    if (validator.isEmail(email)) {
+      emailOrNumberPhone = "email";
+    } else if (validator.isMobilePhone(email, 'any')) {
+      emailOrNumberPhone = "phone";
+    } else {
+      emailOrNumberPhone = "invalid";
+    }
+
+    let user;
+    if (emailOrNumberPhone == 'email') {
+      // Find user by email
+      user = await User.findOne({
+        where: {
+          email,
+          status: "active",
+        },
+      });
+    } else if (emailOrNumberPhone == 'phone') {
+      user = await User.findOne({
+        where: {
+          phone: email,
+          status: "active",
+        },
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        code: "BAD_REQUEST",
+        error: {
+          message: "user not found",
+        },
+      });
+    }
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -143,8 +188,7 @@ const login = async (req, res) => {
     let token;
     if (infinite_token) {
       // Generate token
-      token = jwt.sign(
-        {
+      token = jwt.sign({
           id: user.id_user,
           email: user.email,
         },
@@ -152,24 +196,20 @@ const login = async (req, res) => {
         // { expiresIn: '1h' } // Adjust expiration time as necessary
       );
     } else if (remember_me) {
-      token = jwt.sign(
-        {
+      token = jwt.sign({
           id: user.id_user,
           email: user.email,
         },
-        process.env.JWT_SECRET,
-        {
+        process.env.JWT_SECRET, {
           expiresIn: "30d",
         } // Adjust expiration time as necessary
       );
     } else {
-      token = jwt.sign(
-        {
+      token = jwt.sign({
           id: user.id_user,
           email: user.email,
         },
-        process.env.JWT_SECRET,
-        {
+        process.env.JWT_SECRET, {
           expiresIn: "1h",
         } // Adjust expiration time as necessary
       );
@@ -265,8 +305,7 @@ const createUser = async (req, res) => {
     // Call sendEmailFunction, make run in background
     const emailResponse = sendEmailFunction(
       email,
-      "verify_email",
-      {}, // params are dynamically added inside the function
+      "verify_email", {}, // params are dynamically added inside the function
       "ind" // or 'eng' for English template
     );
 
@@ -319,7 +358,9 @@ const updateUser = async (req, res) => {
     }
 
     // Extract user data from request
-    const { id_user } = req.params; // User ID from the URL
+    const {
+      id_user
+    } = req.params; // User ID from the URL
     const {
       email,
       password,
@@ -394,7 +435,9 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     // Extract user ID from request parameters
-    const { id_user } = req.params;
+    const {
+      id_user
+    } = req.params;
 
     // Find and delete the user
     const user = await User.findOne({
@@ -440,7 +483,11 @@ const deleteUser = async (req, res) => {
 
 const logUserAccess = async (req, res) => {
   try {
-    const { id_user, datetime, access_via } = req.body;
+    const {
+      id_user,
+      datetime,
+      access_via
+    } = req.body;
     let userAccess = await UserLogAccessModel.create({
       id_user,
       datetime,
@@ -464,22 +511,23 @@ const logUserAccess = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const {
+      email
+    } = req.body;
 
     // Call sendEmailFunction
     const emailResponse = await sendEmailFunction(
       email,
-      "forgot_password",
-      {}, // params are dynamically added inside the function
+      "forgot_password", {}, // params are dynamically added inside the function
       "ind" // or 'eng' for English template
     );
 
     if (!emailResponse.success) {
       return res
         .status(
-          emailResponse.error && emailResponse.error.code
-            ? emailResponse.error.code
-            : 400
+          emailResponse.error && emailResponse.error.code ?
+          emailResponse.error.code :
+          400
         )
         .json(emailResponse);
     }
@@ -502,7 +550,9 @@ const forgotPassword = async (req, res) => {
 
 const verifyEmail = async (req, res) => {
   try {
-    const { token } = req.params; // User ID from the URL
+    const {
+      token
+    } = req.params; // User ID from the URL
 
     // Ensure the user is authenticated and `id_user` is present
     if (!userLogin || !userLogin.id_user) {
@@ -516,8 +566,7 @@ const verifyEmail = async (req, res) => {
     }
 
     // Update the user's email verification date
-    const updateUser = await User.update(
-      {
+    const updateUser = await User.update({
         email_verified_at: new Date(),
       }, // Fields to update
       {

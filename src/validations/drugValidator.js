@@ -27,7 +27,7 @@ const drugScheduleValidationRules = [
     .notEmpty().withMessage('Periode is required'),
 
   body('consume_regulation')
-    .isIn(['sebelum_makan', 'sesudah_makan', 'tidak_ada_aturan']).withMessage('Invalid consume regulation')
+    .isIn(['sebelum_makan', 'sesudah_makan', 'saat_makan', 'saat_perut_kosong', 'sebelum tidur', 'setelah_bangun_tidur']).withMessage('Invalid consume regulation')
     .notEmpty().withMessage('Consume regulation is required'),
 
   // bila tidak di isi akan di asumsikan selama 1 bulan
