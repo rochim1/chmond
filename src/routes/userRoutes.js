@@ -117,6 +117,9 @@ apiRouter.delete('/drug_consume_time/delete/:id_drug_consume_time', authMiddlewa
 apiRouter.post('/fcm/store', authMiddleware, validateFcm, notificationController.storeFCMtoken); // Create a new user
 
 
+// view router
+
+
 module.exports = {
     apiRouter,
     api
