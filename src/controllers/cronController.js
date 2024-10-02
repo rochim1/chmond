@@ -260,7 +260,7 @@ const updateNotificationSchedule = async (schedule, tipe = 'chemotherapy') => {
 const sendNotification = async (schedule, tipe) => {
     try {
 
-        const user = Users.findOne({
+        const user = await Users.findOne({
             where: {
                 id_user: schedule.id_user,
                 status: 'active'
