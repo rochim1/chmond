@@ -42,8 +42,8 @@ apiRouter.post('/login', loginValidator, userController.login); // Login user
 apiRouter.post('/auth/google', userController.createUserByGoogle); // Authenticate with Google
 
 api.get('/reset/:token', userController.verifyEmail);
-api.get('/verify_email/:token', userController.verifyProcess);
-apiRouter.post('/auth/lupaPassword', userController.forgotPassword);
+// api.get('/verify_email/:token', userController.verifyProcess);
+apiRouter.post('/auth/lupaPassword', authMiddleware, userController.forgotPassword);
 apiRouter.post('/auth/verifyEmail/:token', userController.verifyEmail);
 
 apiRouter.post('/users/log_access', authMiddleware, userController.logUserAccess); // Create a new user
@@ -118,6 +118,162 @@ apiRouter.post('/fcm/store', authMiddleware, validateFcm, notificationController
 
 
 // view router
+const jwt = require('jsonwebtoken');
+const User = require("../models/userModel");
+const {
+    Op
+} = require('sequelize');
+
+async function emailIsAlreadyVerified(email) {
+    return await User.findOne({
+        where: {
+            email,
+            status: "active",
+            email_verified_at: {
+                [Op.not]: null, // Check that email_verified_at is NOT null
+            },
+        },
+    });
+}
+
+
+api.get('/verify_email/:token', async (req, res) => {
+    const {
+        token
+    } = req.params;
+    let status = 'success'; // Default status
+    let title;
+
+    try {
+        // Verify the JWT token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Check if the email has already been verified
+        const user = await emailIsAlreadyVerified(decoded.email);
+
+        if (user) { // If the user is found, it means email is already verified
+            status = 'already_verified';
+        } else {
+            // Optionally handle the logic for marking email as verified here
+            // Example: Update the user record to set email_verified_at
+            await User.update({
+                email_verified_at: new Date()
+            }, {
+                where: {
+                    email: decoded.email
+                }
+            });
+            status = 'success'; // Set this to success if you mark it as verified
+        }
+
+    } catch (error) {
+        console.error('Invalid or expired token', error);
+        status = 'failed'; // Set status to failed if token verification fails
+    }
+
+    // Set the title based on the status
+    if (status === 'success') {
+        title = 'Konfirmasi Email Berhasil';
+    } else if (status === 'failed') {
+        title = 'Konfirmasi Email Gagal';
+    } else if (status === 'already_verified') {
+        title = 'Email Sudah Terkonfirmasi';
+    }
+
+    // Render the dynamic page with title and status
+    res.render('verificationEmailResult', {
+        title,
+        status
+    });
+});
+
+
+api.post('/update_password/api/update_password', async (req, res) => {
+    try {
+        // Destructure the password and id_user from the request body
+        let {
+            password,
+            id_user
+        } = req.body;
+
+        // Check if both fields are provided
+        if (!password || !id_user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password and user ID are required',
+            });
+        }
+        // Find the user by id_user
+        const user = await User.findOne({
+            where: {
+                id_user: id_user
+            }
+        });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        // Hash the new password using bcrypt
+        let hashPassword = userController.encrypt(password, process.env.SALT);
+
+        // Update the user's password in the database
+        user.password = hashPassword;
+        await user.save();
+
+        // Respond with success
+        res.status(200).json({
+            success: true,
+            message: 'Password updated successfully',
+        });
+
+
+
+    } catch (error) {
+        // Handle any errors that occur during the process
+        console.error('Error updating password:', error);
+        res.status(500).json({
+            success: false,
+            message: 'An error occurred while updating the password',
+        });
+    }
+});
+
+api.get('/update_password/:token', async (req, res) => {
+    const {
+        token
+    } = req.params;
+    let status = 'success'; // Default status
+    let title;
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        res.render('updatePassword', {
+            id_user: decoded.id_user
+        });
+
+    } catch (error) {
+        console.error('Invalid or expired token', error);
+        status = 'failed'; // Set status to failed if token verification fails
+    }
+
+    // Set the title based on the status
+    if (status === 'success') {
+        title = 'Konfirmasi Email Berhasil';
+    } else if (status === 'failed') {
+        title = 'Update Password Gagal';
+        res.render('verificationEmailResult', {
+            title,
+            status
+        });
+    }
+
+    // Render the dynamic page with title and status
+});
+
 
 
 module.exports = {

@@ -16,6 +16,7 @@ const {
 } = require("../utils/userUtilities");
 const jwt = require("jsonwebtoken");
 const validator = require('validator');
+const e = require("express");
 
 const getOneUsers = async (req, res) => {
   try {
@@ -268,13 +269,24 @@ const createUser = async (req, res) => {
       body_height,
     } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      where: {
-        email,
-        status: "active",
-      },
-    });
+    let existingUser;
+    if (email) {
+      // Check if user already exists
+      existingUser = await User.findOne({
+        where: {
+          email,
+          status: "active",
+        },
+      });
+    } else if (phone) {
+      existingUser = await User.findOne({
+        where: {
+          phone,
+          status: "active",
+        },
+      });
+    }
+
     if (existingUser) {
       return res.status(400).json({
         message: "User already exists",
@@ -302,12 +314,14 @@ const createUser = async (req, res) => {
       body_height,
     });
 
-    // Call sendEmailFunction, make run in background
-    const emailResponse = sendEmailFunction(
-      email,
-      "verify_email", {}, // params are dynamically added inside the function
-      "ind" // or 'eng' for English template
-    );
+    if (email) {
+      // Call sendEmailFunction, make run in background
+      const emailResponse = sendEmailFunction(
+        email,
+        "verify_email", {}, // params are dynamically added inside the function
+        "ind" // or 'eng' for English template
+      );
+    }
 
     // if (!emailResponse.success) {
     //   return res.status(emailResponse.error && emailResponse.error.code ? emailResponse.error.code : 400).json(emailResponse);
@@ -397,6 +411,15 @@ const updateUser = async (req, res) => {
     if (password) {
       password = encrypt(password, process.env.SALT);
     }
+
+    if (email && email !== user.email) {
+      const emailResponse = sendEmailFunction(
+        email,
+        "verify_email", {}, // params are dynamically added inside the function
+        "ind" // or 'eng' for English template
+      );
+    }
+    
     // Update user details
     await user.update({
       email,
@@ -511,10 +534,33 @@ const logUserAccess = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   try {
-    const {
+    let {
       email
     } = req.body;
+    
+    if (!email) {
+      email = req.user.email;
+    }
 
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        code: "BAD_REQUEST",
+        error: {
+          message: "email is needed",
+        },
+      });
+    }
+    
+    if (req.user && !req.user.email_verified_at) {
+      return res.status(403).json({
+        success: false,
+        code: "FORBIDDEN",
+        error: {
+          message: "email is not verified",
+        },
+      });
+    }
     // Call sendEmailFunction
     const emailResponse = await sendEmailFunction(
       email,
@@ -708,4 +754,5 @@ module.exports = {
   forgotPassword,
   verifyEmail,
   verifyProcess,
+  encrypt
 };

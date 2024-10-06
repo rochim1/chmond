@@ -71,7 +71,6 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
                     pass: process.env.PASSWORD,
                 },
             });
-
             // Set dynamic email options
             const finalMailOptions = {
                 from: getMailOptions.from,
@@ -99,9 +98,9 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
         }
     } catch (error) {
         return {
-            success: false,
-            code: 'INTERNAL_SERVER_ERROR',
-            error: {
+            success: error.success || false,
+            code: error.code || 'INTERNAL_SERVER_ERROR',
+            error: error.error || {
                 code: 500,
                 message: error.message
             },
@@ -110,6 +109,7 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
 }
 
 async function sendEmailForgotPassword(getMailOptions, email, params, lang) {
+
     // Fetch user by email and ensure email is verified
     const user = await User.findOne({
         where: {
@@ -120,9 +120,9 @@ async function sendEmailForgotPassword(getMailOptions, email, params, lang) {
             },
         },
     });
-
+    
     if (!user) {
-        return {
+        throw {
             success: false,
             error: {
                 code: 404,
@@ -133,18 +133,22 @@ async function sendEmailForgotPassword(getMailOptions, email, params, lang) {
     }
 
     // Generate token and save to the user document
-    const token = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = token;
-    user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
-    await user.save();
+    // const token = crypto.randomBytes(32).toString('hex');
+    // user.resetPasswordToken = token;
+    // user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
+    // await user.save();
 
+    const token = jwt.sign({ id_user: user.id_user }, process.env.JWT_SECRET, {
+        expiresIn: '1h'
+    });
+    
     // Construct template path and read HTML content
     const templatePath = path.join(__dirname, `${getMailOptions.html}${lang === 'ind' ? 'ind.html' : 'eng.html'}`);
     const htmlSource = fs.readFileSync(templatePath, 'utf-8');
     const template = handlebars.compile(htmlSource);
 
     // Replace placeholders with actual data
-    const resetLink = `http://${process.env.HOST}/reset/${token}`;
+    const resetLink = `http://${process.env.HOST}/update_password/${token}`;
     const replacements = {
         ...params,
         resetLink,
@@ -168,7 +172,7 @@ async function sendEmailVerification(getMailOptions, email, params, lang) {
     });
 
     if (!user) {
-        return {
+        throw {
             success: false,
             error: {
                 code: 404,

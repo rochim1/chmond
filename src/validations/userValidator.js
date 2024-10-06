@@ -8,7 +8,8 @@ const validateUser = [
   // require
   check('email')
   .isEmail().withMessage('Please enter a valid email address')
-  .notEmpty().withMessage('Email is required')
+  // .notEmpty().withMessage('Email is required')
+  .optional()
   .custom(async (value) => {
     // Check if the email already exists in the database
     const user = await User.findOne({

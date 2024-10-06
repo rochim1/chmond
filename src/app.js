@@ -16,6 +16,12 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // start cronjob
 initializeCronJobs()
 
+app.set('view engine', 'ejs');
+app.set('views', './src/views');
+
+
+app.use('/assets/images', express.static(path.join(__dirname, '.', 'assets', 'images')));
+
 app.use('/uploads/thumbnails', express.static(path.join(__dirname, '..', 'uploads', 'thumbnails')));
 app.use('/api/uploads/thumbnails', express.static(path.join(__dirname, '..', 'uploads', 'thumbnails')));
 
