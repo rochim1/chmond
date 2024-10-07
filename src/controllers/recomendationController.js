@@ -4,38 +4,34 @@ const { Op } = require("sequelize");
 
 const getRecomendation = async (req, res) => {
   try {
+    // Handle pagination
     const { page = 1, pageSize = 10 } = req.body;
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    let { status, id_user, tipe } =
-      req.body && req.body.filter
-        ? req.body.filter
-        : {
-            status: "active",
-          };
+    // Destructure filter object, with default values
+    let { status = "active", id_user, tipe } = req.body?.filter || {};
 
-    let whereClause = {
-      status,
-    };
-
+    // Create where clauses
+    let whereClause = { status };
     let EducationWhereClause = {};
+
+    // Handle filtering based on type (tipe)
     if (tipe) {
-      if (tipe == "video_only") {
+      if (tipe === "video_only") {
         EducationWhereClause.video_link = { [Op.ne]: null };
-      } else if (tipe == "article_only") {
+      } else if (tipe === "article_only") {
         EducationWhereClause.video_link = { [Op.eq]: null };
-      } else {
-        EducationWhereClause = { ...EducationWhereClause };
       }
     }
 
+    // Use req.user.id_user if id_user is not provided
     if (!id_user) {
       id_user = req.user.id_user;
     }
 
-    // get user side effect first
-    const getUserSideEffectID = UserSideEffects.findAll({
+    // Fetch user side effects
+    const userSideEffects = await UserSideEffects.findAll({
       where: {
         id_user,
         status: "active",
@@ -43,45 +39,48 @@ const getRecomendation = async (req, res) => {
       attributes: ["id_user_side_effect"],
     });
 
-    if (getUserSideEffectID && getUserSideEffectID.length) {
-      getUserSideEffectID = (await getUserSideEffectID).map(
-        (sideEffect) => sideEffect.id_user_side_effect
-      );
+    // Map the IDs of the user side effects
+    const sideEffectIDs = userSideEffects.map(effect => effect.id_user_side_effect);
 
-      whereClause.id_side_effect = getUserSideEffectID;
+    // If no side effects found, return an empty result set
+    if (!sideEffectIDs.length) {
+      return res.status(200).json({
+        success: true,
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: parseInt(page),
+        data: [],
+      });
     }
 
+    // Add side effect IDs to where clause for filtering recommendations
+    whereClause.id_side_effect = sideEffectIDs;
+
+    // Fetch recommendations with the applied filters, pagination, and include relations
     const { count, rows } = await Recomendation.findAndCountAll({
-      where: whereClause, // Your where condition for filtering Recomendations
-      offset, // For pagination
-      limit, // For pagination
+      where: whereClause, // Filter recommendations
+      offset, // Pagination offset
+      limit, // Pagination limit
       include: [
         {
-          model: Educations, // Model name for Education
-          as: "education", // Alias, if defined in associations
+          model: Educations, // Education model
+          as: "education", // Alias for the model
           attributes: [
-            "id_education",
-            "title",
-            "content",
-            "video_link",
-            "thumbnail",
-            "status",
-          ], // Columns to select from Education
-          where: EducationWhereClause,
+            "id_education", "title", "content", "video_link", "thumbnail", "status"
+          ],
+          where: EducationWhereClause, // Apply education filter if provided
         },
         {
-          model: SideEffects,
-          as: "sideEffect",
+          model: SideEffects, // Side effect model
+          as: "sideEffect", // Alias for the model
           attributes: [
-            "id_side_effect",
-            "effect_name",
-            "effect_detail",
-            "status",
+            "id_side_effect", "effect_name", "effect_detail", "status"
           ],
         },
       ],
     });
 
+    // Return response with pagination and data
     return res.status(200).json({
       success: true,
       totalItems: count,
@@ -90,6 +89,7 @@ const getRecomendation = async (req, res) => {
       data: rows,
     });
   } catch (error) {
+    // Handle any errors
     return res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
@@ -99,6 +99,7 @@ const getRecomendation = async (req, res) => {
     });
   }
 };
+
 
 module.exports = {
   getRecomendation,
