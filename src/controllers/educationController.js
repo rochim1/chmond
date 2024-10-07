@@ -173,66 +173,62 @@ const getOneEducation = async (req, res) => {
   }
 };
 
-
 // Get All Educations with Pagination
 const getAllEducations = async (req, res) => {
   try {
-    const {
-      page = 1, pageSize = 10
-    } = req.body;
-    const {
-      status,
-      tipe
-    } = req.body.filter || {
-      status: "active",
-    };
+    // Pagination and filter parameters
+    const { page = 1, pageSize = 10 } = req.body;
+    const { status = "active", tipe, side_effects_null } = req.body.filter || {};
 
-    let EducationWhereClause = {
-      status
-    };
+    // Build where clause for education based on status and type
+    let EducationWhereClause = { status };
+
     if (tipe) {
-      if (tipe == "video_only") {
-        EducationWhereClause.video_link = {
-          [Op.ne]: null
-        };
-      } else if (tipe == "article_only") {
-        EducationWhereClause.video_link = {
-          [Op.eq]: null
-        };
-      } else {
-        EducationWhereClause = {
-          ...EducationWhereClause
-        };
+      if (tipe === "video_only") {
+        EducationWhereClause.video_link = { [Op.ne]: null };
+      } else if (tipe === "article_only") {
+        EducationWhereClause.video_link = { [Op.eq]: null };
       }
     }
 
+    // Pagination settings
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    let educations = await Educations.findAndCountAll({
+    // Handle filtering educations without recommendations
+    let includeClause = [
+      {
+        model: Recomendation,
+        as: 'recomendations',
+        where: { status: 'active' },
+        required: false,
+        include: [
+          {
+            model: SideEffects, // Include side effects model
+            as: "sideEffect",
+            required: false,
+          },
+        ],
+      },
+    ];
+
+    if (side_effects_null) {
+      // Filter educations without any recommendations
+      includeClause[0].where = { id_rekomendasi: null };
+    }
+
+    // Query to get educations
+    const educations = await Educations.findAndCountAll({
       where: EducationWhereClause,
       offset,
       limit,
-      distinct: true, // Ensures distinct counting of the education records
-      include: [{
-        model: Recomendation,
-        as: 'recomendations',
-        where: {
-          status: 'active',
-        },
-        required: false,
-        include: [{
-          model: SideEffects, // Ensure correct model reference
-          as: "sideEffect",
-          required: false,
-        }, ],
-      }, ],
+      distinct: true, // Ensure distinct count for pagination
+      include: includeClause,
     });
 
-
+    // Format the response data
     if (educations && educations.rows && educations.rows.length) {
       educations.rows = educations.rows.map((education) => {
-        // Remove the recomendations from the education object
         const educationData = {
           id_education: education.id_education,
           title: education.title,
@@ -244,23 +240,22 @@ const getAllEducations = async (req, res) => {
           updatedAt: education.updatedAt,
         };
 
-        let getSideEffects = [];
-        if (education && education.recomendations && education.recomendations.length) {
-          getSideEffects = education.recomendations.map(recomendation => recomendation.sideEffect);
+        let sideEffects = [];
+        if (education.recomendations && education.recomendations.length) {
+          sideEffects = education.recomendations
+            .map(recomendation => recomendation.sideEffect)
+            .filter(sideEffect => sideEffect); // Filter out any null side effects
         }
 
-        // Return education data along with side effects
+        // Return the education data along with associated side effects
         return {
-          ...educationData, // Include all the education fields
-          side_effects: getSideEffects // Include side effects array
+          ...educationData,
+          side_effects: sideEffects,
         };
-
-        // Return education without modifications if no recommendations are found
-        return education;
       });
     }
 
-
+    // Return the paginated response
     return res.status(200).json({
       success: true,
       totalItems: educations.count,
@@ -269,6 +264,7 @@ const getAllEducations = async (req, res) => {
       educations: educations.rows,
     });
   } catch (error) {
+    // Handle errors
     return res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
