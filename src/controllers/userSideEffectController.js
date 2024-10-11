@@ -12,7 +12,7 @@ const createUserSideEffect = async (req, res) => {
       });
     }
 
-    const {
+    let {
       id_side_effect,
       id_user,
       date_feel,

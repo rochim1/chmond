@@ -7,6 +7,7 @@ const validateUserSideEffects = [
     .isUUID().withMessage('id_side_effect must be a valid UUID'),
 
   body('id_user')
+    .optional()
     .isUUID().withMessage('id_user must be a valid UUID'),
 
   body('date_feel')

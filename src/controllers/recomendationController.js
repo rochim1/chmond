@@ -40,8 +40,8 @@ const getRecomendation = async (req, res) => {
     });
 
     // Map the IDs of the user side effects
-    const sideEffectIDs = userSideEffects.map(effect => effect.id_user_side_effect);
-
+    const sideEffectIDs = userSideEffects.map(effect => effect.id_side_effect);
+    console.log(sideEffectIDs)
     // If no side effects found, return an empty result set
     if (!sideEffectIDs.length) {
       return res.status(200).json({
