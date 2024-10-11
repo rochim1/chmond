@@ -36,7 +36,7 @@ const getRecomendation = async (req, res) => {
         id_user,
         status: "active",
       },
-      attributes: ["id_user_side_effect"],
+      attributes: ["id_side_effect"],
     });
 
     // Map the IDs of the user side effects
