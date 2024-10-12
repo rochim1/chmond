@@ -258,7 +258,7 @@ const getAllMonitoringLab = async (req, res) => {
       where: whereClause,
       offset,
       limit,
-      order: [['createdAt', 'ASC']], // Or 'ASC' for ascending order
+      order: [['createdAt', 'DESC']], // Or 'ASC' for ascending order
     });
 
     return res.status(200).json({
