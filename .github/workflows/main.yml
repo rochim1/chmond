@@ -1,0 +1,36 @@
+on:
+  push:
+    branches:
+      - main
+
+name: 🚀 Deploy Chemond on PUSH
+jobs:
+  web-deploy:
+    name: 🎉 Deploying
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v2
+
+      - name: 📂 Sync files
+        uses: SamKirkland/FTP-Deploy-Action@4.2.0
+        with:
+          server: panel.biscuit.my.id
+          username: chemondftp
+          password: ${{ secrets.FTP_PASSWORD }}
+
+      - name: 🔔 Send Notification
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            *${{ job.status == 'success' && '✅' || '❌' }} Sync Back End - Chemond PROD*
+
+            📝 *Commit by* ${{ github.actor }}
+
+            *${{ github.event.head_commit.message }}*
+
+            🌐 [https://github.com/${{ github.repository }}/commit/${{github.sha}}](https://github.com/${{ github.repository }}/commit/${{github.sha}})
+            Repository: ${{ github.repository }}
