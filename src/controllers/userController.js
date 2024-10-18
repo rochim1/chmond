@@ -380,6 +380,8 @@ const verifyWithGoogle = async (req, res) => {
   try {
     console.log(req.params)
     console.log(req.body)
+    console.log(req.query)
+    
     let {
       id_token
     } = req.body;
