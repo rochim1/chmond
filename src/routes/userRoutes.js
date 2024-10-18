@@ -40,6 +40,7 @@ const api = express.Router();
 // User Routes
 apiRouter.post('/login', loginValidator, userController.login); // Login user
 apiRouter.post('/verify_google', userController.verifyWithGoogle);
+apiRouter.get('/verify_google', userController.verifyWithGoogle);
 
 api.get('/reset/:token', userController.verifyEmail);
 // api.get('/verify_email/:token', userController.verifyProcess);

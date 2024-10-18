@@ -379,9 +379,12 @@ function formatPhoneNumberToLocal(phoneNumber, regionCode) {
 const verifyWithGoogle = async (req, res) => {
   try {
 
-    const {
+    let {
       id_token
     } = req.body;
+    if (!id_token) {
+      id_token = req.params
+    }
     const {
       tokens
     } = await client.getToken(id_token);
@@ -457,6 +460,7 @@ const verifyWithGoogle = async (req, res) => {
     });
 
   } catch (error) {
+    console.log(error)
     res.status(500).json({
       success: false,
       message: "INTERNAL_SERVER_ERROR",
