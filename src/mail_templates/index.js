@@ -34,6 +34,17 @@ const mailOptions = [{
         to: '', // User email will be dynamically set
         subject: 'verifikasi email',
         html: '../mail_templates/emailVerification/'
+    },
+    {
+        template_name: 'register_oauth',
+        require_params: {
+            name: 'name',
+        },
+        from: process.env.EMAIL,
+        receiver_role: ['user'],
+        to: '', // User email will be dynamically set
+        subject: 'berhasil mendaftar',
+        html: '../mail_templates/emailVerificationGenerateByGoogle/'
     }
 ];
 
@@ -59,6 +70,10 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
                 emailTemplate = template.emailTemplate
                 user = template.user
             } else if (template_name == 'verify_email') {
+                const template = await sendEmailVerification(getMailOptions, email,params, lang);
+                emailTemplate = template.emailTemplate
+                user = template.user
+            } else if (template_name == 'register_oauth') {
                 const template = await sendEmailVerification(getMailOptions, email,params, lang);
                 emailTemplate = template.emailTemplate
                 user = template.user

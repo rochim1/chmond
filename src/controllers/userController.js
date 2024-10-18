@@ -345,6 +345,128 @@ const createUser = async (req, res) => {
   }
 };
 
+const {
+  OAuth2Client
+} = require('google-auth-library');
+const client = new OAuth2Client(process.env.oauth_client_id, process.env.oauth_client_secret, process.env.oauth_redirect_uris);
+
+const libphonenumber = require('google-libphonenumber');
+const phoneUtil = libphonenumber.PhoneNumberUtil.getInstance();
+const authorizeUrl = client.generateAuthUrl({
+  access_type: 'offline',
+  scope: [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+    'https://www.googleapis.com/auth/user.birthday.read' // Add this to request birthdate
+  ]
+});
+
+function formatPhoneNumberToLocal(phoneNumber, regionCode) {
+  try {
+    const number = phoneUtil.parse(phoneNumber, regionCode);
+
+    // Format the number without the international country code (use national format)
+    const nationalNumber = phoneUtil.format(number, libphonenumber.PhoneNumberFormat.NATIONAL);
+
+    // Replace the first digit with 0 (if it's not already 0)
+    return nationalNumber.replace(/^(\d)/, '0');
+  } catch (error) {
+    console.error('Error parsing phone number:', error);
+    return null;
+  }
+}
+
+const verifyWithGoogle = async (req, res) => {
+  try {
+
+    const {
+      code
+    } = req.body;
+    const {
+      tokens
+    } = await client.getToken(code);
+
+    // Verifikasi ID token untuk mendapatk  an informasi pengguna
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.CLIENT_ID, // Sesuaikan dengan client ID Anda
+    });
+
+    const payload = ticket.getPayload();
+
+    // Anda dapat mengakses informasi pengguna di payload
+    const userInfo = {
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture,
+      email_verified: payload.email_verified,
+      locale: payload.locale,
+      sub: payload.sub, // Unique user ID from Google
+      birthdate: payload.birthdate || null, // Retrieve birthdate if available
+    };
+
+    let formattedPhone;
+    if (payload.phone_number) {
+      formattedPhone = formatPhoneNumberToLocal(payload.phone_number, payload.locale);
+    }
+
+    const user = await User.findOne({
+      where: {
+        status: "active",
+        [Op.or]: [{
+          email: payload.email
+        }, formattedPhone ? {
+          phone: formattedPhone
+        } : null].filter(Boolean),
+      },
+    });
+
+    if (!user) {
+      let hashPassword = encrypt('random_string', process.env.SALT);
+
+      user = await User.create({
+        email: userInfo.email,
+        password: hashPassword,
+        name: userInfo.name,
+        birthdate: userInfo.birthdate,
+      });
+
+      // sending registeration message
+      if (user.email) {
+        const emailResponse = sendEmailFunction(
+          email,
+          "register_oauth", {}, // params are dynamically added inside the function
+          "ind" // or 'eng' for English template
+        );
+      }
+    }
+
+    const token = jwt.sign({
+        id: user.id_user,
+        email: user.email,
+      },
+      process.env.JWT_SECRET
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      infinite_token: true,
+      token,
+      data: user,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "INTERNAL_SERVER_ERROR",
+      error: {
+        message: error.message,
+      },
+    });
+  }
+};
+
 const createUserByGoogle = async (req, res) => {
   try {
     loginWithGoogle.authenticate("google", {
@@ -419,7 +541,7 @@ const updateUser = async (req, res) => {
         "ind" // or 'eng' for English template
       );
     }
-    
+
     // Update user details
     await user.update({
       email,
@@ -537,7 +659,7 @@ const forgotPassword = async (req, res) => {
     let {
       email
     } = req.body;
-    
+
     if (!email) {
       email = req.user.email;
     }
@@ -551,7 +673,7 @@ const forgotPassword = async (req, res) => {
         },
       });
     }
-    
+
     if (req.user && !req.user.email_verified_at) {
       return res.status(403).json({
         success: false,
@@ -754,5 +876,6 @@ module.exports = {
   forgotPassword,
   verifyEmail,
   verifyProcess,
-  encrypt
+  encrypt,
+  verifyWithGoogle
 };
