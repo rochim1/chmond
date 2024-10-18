@@ -379,24 +379,27 @@ function formatPhoneNumberToLocal(phoneNumber, regionCode) {
 const verifyWithGoogle = async (req, res) => {
   try {
     console.log(req.params)
+    console.log(req.body)
     let {
       id_token
     } = req.body;
     if (!id_token) {
       id_token = req.params
     }
-    const {
-      tokens
-    } = await client.getToken(id_token);
+
+    const { tokens } = await client.getToken(id_token);
+    
+    console.log('token rochim', tokens)
 
     // Verifikasi ID token untuk mendapatk  an informasi pengguna
     const ticket = await client.verifyIdToken({
       idToken: tokens.id_token,
-      audience: process.env.CLIENT_ID, // Sesuaikan dengan client ID Anda
+      audience: process.env.oauth_client_id
     });
 
+    console.log(ticket)
     const payload = ticket.getPayload();
-
+console.log(payload)
     // Anda dapat mengakses informasi pengguna di payload
     const userInfo = {
       email: payload.email,
