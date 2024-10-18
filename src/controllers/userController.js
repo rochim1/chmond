@@ -380,11 +380,11 @@ const verifyWithGoogle = async (req, res) => {
   try {
 
     const {
-      code
+      id_token
     } = req.body;
     const {
       tokens
-    } = await client.getToken(code);
+    } = await client.getToken(id_token);
 
     // Verifikasi ID token untuk mendapatk  an informasi pengguna
     const ticket = await client.verifyIdToken({
