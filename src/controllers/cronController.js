@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const moment = require('moment');
+const momentz = require('moment-timezone');
 // const { sendNotification } = require('./notificationService');
 const ChemoSchedule = require("../models/chemoSchModel");
 const {
@@ -27,7 +28,7 @@ const initializeCronJobs = () => {
     initializeImmediatlyNotifSchduleDrug();
 
     let num = 0
-    cron.schedule('0 0 6 20 10 * 2024', () => {
+    cron.schedule('* 30 18 19 10 *', () => {
         num++
         console.log('test cron job per detik', num)
     });
@@ -174,7 +175,11 @@ const scheduleNotification = async (schedule, tipe) => {
         let job;
         if (tipe == 'chemotherapy') {
 
-            let chemoDateTime = moment(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm');
+            let chemoDateTime = momentz.tz(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm', 'Asia/Jakarta');
+            if (process.env.environment == "production") {
+                chemoDateTime = chemoDateTime.clone().tz('America/Chicago'); // cz server time in america
+            }
+
             if (schedule.remember_before_minutes) {
                 chemoDateTime = chemoDateTime.subtract(schedule.remember_before_minutes, 'minutes');
             }
@@ -193,9 +198,12 @@ const scheduleNotification = async (schedule, tipe) => {
 
         } else if (tipe == 'drug_consume_time') {
 
-            // const periode = schedule.drug_schedule && schedule.drug_schedule.periode ? schedule.drug_schedule.periode : ''
+            let drugConsumeTime = momentz.tz(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm', 'Asia/Jakarta');
+            if (process.env.environment == "production") {
+                drugConsumeTime = drugConsumeTime.clone().tz('America/Chicago'); // cz server time in america
+            }
 
-            const drugConsumeTime = moment(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm');
+            // const periode = schedule.drug_schedule && schedule.drug_schedule.periode ? schedule.drug_schedule.periode : ''
 
             const notificationTime = drugConsumeTime.format('s m H D M * YYYY');
 
