@@ -385,6 +385,7 @@ const verifyWithGoogle = async (req, res) => {
       id_token
     } = req.body;
     console.log('id_token nich', id_token)
+    console.log('oauth_client_id nich', process.env.oauth_client_id)
     // const { tokens } = await client.getToken({
     //   code: id_token,
     //   client_id: process.env.oauth_client_id,
