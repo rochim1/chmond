@@ -175,7 +175,7 @@ const scheduleNotification = async (schedule, tipe) => {
             }
             // Format the datetime to match the cron format (seconds minutes hours day month day-of-week)
             const notificationTime = chemoDateTime.format('s m H D M * YYYY');
-
+            console.log(notificationTime)
             // Schedule a job based on the user's notification time
             job = cron.schedule(notificationTime, () => {
                 // Call the notification sending logic here
