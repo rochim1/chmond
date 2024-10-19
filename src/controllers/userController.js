@@ -433,7 +433,7 @@ const verifyWithGoogle = async (req, res) => {
       // sending registeration message
       if (user.email) {
         const emailResponse = sendEmailFunction(
-          email,
+          userInfo.email,
           "register_oauth", {}, // params are dynamically added inside the function
           "ind" // or 'eng' for English template
         );
