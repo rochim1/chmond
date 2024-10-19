@@ -377,17 +377,14 @@ function formatPhoneNumberToLocal(phoneNumber, regionCode) {
 }
 
 const verifyWithGoogle = async (req, res) => {
-  try {    
+  try {
     console.log('===================================================================================================')
-    const { id_token, access_token } = req.body;
-
-    if (!id_token || !access_token) {
-      return res.status(400).json({
-        success: false,
-        message: 'id_token or access_token not found in request',
-      });
-    }
-
+    console.log(req.body)
+    
+    let {
+      id_token
+    } = req.body;
+    console.log('id_token nich', id_token)
     // const { tokens } = await client.getToken({
     //   code: id_token,
     //   client_id: process.env.oauth_client_id,
