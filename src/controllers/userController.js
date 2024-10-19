@@ -385,13 +385,14 @@ const verifyWithGoogle = async (req, res) => {
     let {
       id_token
     } = req.body;
-    if (!id_token) {
-      id_token = req.params
-    }
 
-    const { tokens } = await client.getToken(id_token);
-    
-    console.log('token rochim', tokens)
+    const { tokens } = await client.getToken({
+      code: id_token,
+      client_id: process.env.oauth_client_id,
+      client_secret: process.env.oauth_client_secret,
+      redirect_uri: process.env.oauth_redirect_uris,
+      grant_type: 'authorization_code'
+    });
 
     // Verifikasi ID token untuk mendapatk  an informasi pengguna
     const ticket = await client.verifyIdToken({
