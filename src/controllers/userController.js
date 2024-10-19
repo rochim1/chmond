@@ -377,32 +377,34 @@ function formatPhoneNumberToLocal(phoneNumber, regionCode) {
 }
 
 const verifyWithGoogle = async (req, res) => {
-  try {
-    console.log(req.params)
-    console.log(req.body)
-    console.log(req.query)
+  try {    
     
-    let {
-      id_token
-    } = req.body;
+    const { id_token, access_token } = req.body;
 
-    const { tokens } = await client.getToken({
-      code: id_token,
-      client_id: process.env.oauth_client_id,
-      client_secret: process.env.oauth_client_secret,
-      redirect_uri: process.env.oauth_redirect_uris,
-      grant_type: 'authorization_code'
-    });
+    if (!id_token || !access_token) {
+      return res.status(400).json({
+        success: false,
+        message: 'id_token or access_token not found in request',
+      });
+    }
+
+    // const { tokens } = await client.getToken({
+    //   code: id_token,
+    //   client_id: process.env.oauth_client_id,
+    //   client_secret: process.env.oauth_client_secret,
+    //   redirect_uri: process.env.oauth_redirect_uris,
+    //   grant_type: 'authorization_code'
+    // });
 
     // Verifikasi ID token untuk mendapatk  an informasi pengguna
     const ticket = await client.verifyIdToken({
-      idToken: tokens.id_token,
+      idToken: id_token,
       audience: process.env.oauth_client_id
     });
 
     console.log(ticket)
     const payload = ticket.getPayload();
-console.log(payload)
+    console.log(payload)
     // Anda dapat mengakses informasi pengguna di payload
     const userInfo = {
       email: payload.email,
