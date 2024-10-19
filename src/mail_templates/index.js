@@ -112,7 +112,7 @@ async function sendEmailFunction(email, template_name, params, lang = 'ind') {
             };
         }
     } catch (error) {
-        return {
+        throw {
             success: error.success || false,
             code: error.code || 'INTERNAL_SERVER_ERROR',
             error: error.error || {
