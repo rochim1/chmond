@@ -85,7 +85,7 @@ const triggerChemoTerapyNotif = async (req, res) => {
                 limit: chunkSize,
                 offset: offset,
                 order: [
-                    ['id_chemoSchedule', 'ASC']
+                    ['updatedAt', 'DESC']
                 ],
                 where: {
                     status: 'active',
@@ -102,7 +102,10 @@ const triggerChemoTerapyNotif = async (req, res) => {
             // Process each schedule
             for (let schedule of schedules) {
                 // Schedule notifications for each schedule
-                await scheduleNotification(schedule, 'chemotherapy');
+                const notifTime = moment(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(schedule.remember_before_minutes, 'minutes').startOf('minute');
+                if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
+                    await scheduleNotification(schedule, 'chemotherapy');
+                }
             }
 
             // Move to the next chunk
@@ -124,7 +127,7 @@ const triggerDrugNotif = async (req, res) => {
                 limit: chunkSize,
                 offset: offset,
                 order: [
-                    ['id_drug_consume_time', 'ASC']
+                    ['updatedAt', 'DESC']
                 ],
                 where: {
                     status: 'active',
@@ -146,7 +149,10 @@ const triggerDrugNotif = async (req, res) => {
             // Process each schedule
             for (let schedule of schedules) {
                 // Schedule notifications for each schedule
-                await scheduleNotification(schedule, 'DrugConsumeTime');
+                const notifTime = moment(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+                if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
+                    await scheduleNotification(schedule, 'DrugConsumeTime');
+                }
             }
 
             // Move to the next chunk
@@ -160,7 +166,6 @@ const triggerDrugNotif = async (req, res) => {
 // Function to schedule a notification for a specific schedule
 const scheduleNotification = async (schedule, tipe) => {
     try {
-        console.log(schedule)
         let job;
         if (tipe == 'chemotherapy') {
 
@@ -231,7 +236,7 @@ const stopAllJobs = (tipe) => {
                 console.log(`Job for chemo schedule ${scheduleId} stopped`);
             }
         });
-        
+
         Object.keys(chemo_jobs).forEach(scheduleId => delete chemo_jobs[scheduleId]);
     } else if (tipe == 'drug_consume_time') {
         Object.keys(drug_jobs).forEach(scheduleId => {
@@ -253,7 +258,7 @@ const updateNotificationSchedule = async (schedule, tipe = 'chemotherapy') => {
     } else if (tipe == 'drug_consume_time') {
         stopScheduledJob(schedule.id_drug_consume_time, tipe);
     }
-    
+
     await scheduleNotification(schedule, tipe);
 };
 

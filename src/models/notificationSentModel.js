@@ -6,7 +6,7 @@ const User = require('./userModel');
 const ChemoSchedule = require('./chemoSchModel');
 const DrugConsumeTime = require('./drugConsumeTimeModel');
 
-const NotificationSent = sequelize.define('notification_sent', {
+const NotificationSent = sequelize.define('notification_sents', {
   id_notification_sent: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
