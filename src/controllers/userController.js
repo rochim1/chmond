@@ -420,7 +420,7 @@ const verifyWithGoogle = async (req, res) => {
       formattedPhone = formatPhoneNumberToLocal(payload.phone_number, payload.locale);
     }
 
-    const user = await User.findOne({
+    let user = await User.findOne({
       where: {
         status: "active",
         [Op.or]: [{
