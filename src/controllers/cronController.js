@@ -27,9 +27,8 @@ const initializeCronJobs = () => {
     initializeImmediatlyNotifSchduleDrug();
 
     let num = 0
-    cron.schedule('* * * * * *', () => {
+    cron.schedule('0 0 6 20 10 * 2024', () => {
         num++
-        // Call the notification sending logic here
         console.log('test cron job per detik', num)
     });
     // Schedule the job to recheck and update all chemo_jobs every midnight
