@@ -28,7 +28,7 @@ const createChemoSchedule = async (req, res) => {
       id_user,
       note,
     } = req.body;
-    console.log(req.body)
+    
     if (!id_user) {
       id_user = req.user.id_user;
     }
@@ -44,6 +44,7 @@ const createChemoSchedule = async (req, res) => {
     });
 
     const notifTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes').startOf('minute');
+    console.log(notifTime.isSameOrAfter(moment().startOf('minute')))
     if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
       await cronController.scheduleNotification(newChemoSchedule, 'chemotherapy');
     } else {

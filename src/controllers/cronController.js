@@ -273,6 +273,7 @@ const sendNotification = async (schedule, tipe) => {
             }
         })
 
+        console.log(user.fcm_token)
         // if (!user || (user && !user.fcm_token)) {
         //     return false;
         // }
@@ -288,8 +289,10 @@ const sendNotification = async (schedule, tipe) => {
                 sender: 'system',
                 tipe: 'chemotherapy',
                 attribute: {
-                    id: schedule.id_chemoSchedule,
                     link: '/notification'
+                },
+                data: {
+                    id: schedule.id_chemoSchedule,
                 }
             }
 
@@ -324,6 +327,9 @@ const sendNotification = async (schedule, tipe) => {
                 attribute: {
                     id: schedule.id_drug_consume_time,
                     link: '/notification'
+                },
+                data: {
+                    id: schedule.id_drug_consume_time,
                 }
             }
 

@@ -16,8 +16,84 @@ const ChemoSchedule = require('../models/chemoSchModel');
 const {
   NotificationSent, DrugConsumeTime
 } = require('../models/index');
-const firebaseConfig = '../services/messaging.service.js'
+const firebaseConfig = require('../services/messaging.service.js');
+const admin = require('firebase-admin'); // Ensure admin is imported
 // Create Education
+const pushNotification = async ({
+  fcm_token = null,
+  title = "",
+  body = "",
+  multi_fcm_token = [],
+  attribute,
+  data
+}) => {
+  try {
+    // Initialize Firebase app
+    if (!admin) {
+      console.error("Firebase Admin SDK is not initialized.");
+      return {
+        success: false,
+        response: "Firebase Admin SDK is not initialized."
+      };
+    }
+
+    let app = await firebaseConfig.initializeAppFirebase(admin);
+    console.log("Initialized Firebase App:");
+    
+    const notification = {
+      notification: {
+        title,
+        body,
+      },
+      webpush: {
+        fcmOptions: attribute,
+      },
+      data: data
+    };
+
+    if (fcm_token) {
+      // Send notification to a single device token
+      const message = {
+        ...notification,
+        token: fcm_token,
+      };
+
+      console.log(message)
+      const response = await admin.messaging().send(message);
+      console.log(response)
+      return {
+        success: true,
+        response,
+      };
+    }
+
+    if (multi_fcm_token && multi_fcm_token.length > 0) {
+      // Send notification to multiple device tokens
+      const multicastMessage = {
+        ...notification,
+        tokens: multi_fcm_token,
+      };
+
+      const response = await admin.messaging().sendMulticast(multicastMessage);
+      return {
+        success: true,
+        response,
+      };
+    }
+
+    return {
+      success: false,
+      response: "No fcm_token or multi_fcm_token provided.",
+    };
+  } catch (err) {
+    console.log('error sending message fcm', err)
+    return {
+      success: false,
+      response: err.message,
+    };
+  }
+};
+
 const storeFCMtoken = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -75,67 +151,6 @@ const storeFCMtoken = async (req, res) => {
         message: error.message,
       },
     });
-  }
-};
-
-const pushNotification = async ({
-  fcm_token = null,
-  title = "",
-  body = "",
-  multi_fcm_token = [],
-  attribute
-}) => {
-  try {
-    // Initialize Firebase app
-    await firebaseConfig.initializeAppFirebase(admin);
-
-    const notification = {
-      notification: {
-        title,
-        body,
-      },
-      webpush: {
-        fcmOptions: attribute,
-      },
-    };
-
-    if (fcm_token) {
-      // Send notification to a single device token
-      const message = {
-        ...notification,
-        token: fcm_token,
-      };
-
-      const response = await admin.messaging().send(message);
-      return {
-        success: true,
-        response,
-      };
-    }
-
-    if (multi_fcm_token && multi_fcm_token.length > 0) {
-      // Send notification to multiple device tokens
-      const multicastMessage = {
-        ...notification,
-        tokens: multi_fcm_token,
-      };
-
-      const response = await admin.messaging().sendMulticast(multicastMessage);
-      return {
-        success: true,
-        response,
-      };
-    }
-
-    return {
-      success: false,
-      response: "No fcm_token or multi_fcm_token provided.",
-    };
-  } catch (err) {
-    return {
-      success: false,
-      response: err.message,
-    };
   }
 };
 
