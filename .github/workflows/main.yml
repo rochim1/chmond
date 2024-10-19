@@ -18,6 +18,11 @@ jobs:
           server: panel.biscuit.my.id
           username: chemondftp
           password: ${{ secrets.FTP_PASSWORD }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/uploads/**
 
       - name: 🔔 Send Notification
         uses: appleboy/telegram-action@master
