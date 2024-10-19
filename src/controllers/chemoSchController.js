@@ -28,7 +28,7 @@ const createChemoSchedule = async (req, res) => {
       id_user,
       note,
     } = req.body;
-
+    console.log(req.body)
     if (!id_user) {
       id_user = req.user.id_user;
     }
