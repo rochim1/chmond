@@ -17,6 +17,7 @@ const {
 const jwt = require("jsonwebtoken");
 const validator = require('validator');
 const e = require("express");
+const { Op } = require("sequelize");
 
 const getOneUsers = async (req, res) => {
   try {

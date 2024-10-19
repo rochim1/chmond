@@ -1,5 +1,5 @@
 const { body } = require('express-validator');
-const { Op } = require('sequelize');
+const { Op } = require("sequelize");
 // const drugSchModel = require('../models/drugSchModel');
 
 const validateDrugConsumeTime = [
