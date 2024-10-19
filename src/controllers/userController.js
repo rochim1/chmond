@@ -378,7 +378,7 @@ function formatPhoneNumberToLocal(phoneNumber, regionCode) {
 
 const verifyWithGoogle = async (req, res) => {
   try {    
-    
+    console.log('===================================================================================================')
     const { id_token, access_token } = req.body;
 
     if (!id_token || !access_token) {
