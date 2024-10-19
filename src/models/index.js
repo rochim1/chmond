@@ -4,6 +4,10 @@ const SideEffects = require('./sideEffectsModel');
 const UserSideEffects = require("./userSideEffectsModel");
 const DrugSchedule = require('./drugSchModel')
 const DrugConsumeTime = require('./drugConsumeTimeModel')
+
+const ChemoSchedule = require('./chemoSchModel')
+const NotificationSent = require('./notificationSentModel')
+
 // Define associations here
 Educations.hasMany(Recomendation, {
   foreignKey: 'id_education',
@@ -47,6 +51,13 @@ DrugConsumeTime.belongsTo(DrugSchedule, {
   as: 'drug_schedule',
   onDelete: 'NO ACTION', // Optional: handle delete
 });
+
+
+NotificationSent.belongsTo(ChemoSchedule, { foreignKey: 'id_chemoSchedule' });
+NotificationSent.belongsTo(DrugConsumeTime, { foreignKey: 'id_drug_consume_time' });
+
+
+
 // Ensure models are exported after associations are defined
 module.exports = {
   Educations,
@@ -54,5 +65,6 @@ module.exports = {
   UserSideEffects,
   SideEffects,
   DrugSchedule,
-  DrugConsumeTime
+  DrugConsumeTime,
+  NotificationSent
 };

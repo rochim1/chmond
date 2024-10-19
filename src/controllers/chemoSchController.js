@@ -43,8 +43,8 @@ const createChemoSchedule = async (req, res) => {
       note,
     });
 
-    const notifTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes');
-    if (notifTime.isSameOrAfter(moment())) {
+    const notifTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes').startOf('minute');
+    if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
       await cronController.scheduleNotification(newChemoSchedule, 'chemotherapy');
     } else {
       // do something in the future
@@ -123,7 +123,7 @@ const updateChemoSchedule = async (req, res) => {
     }
 
     if (scheduleToUpdate.waktu_kemoterapi !== waktu_kemoterapi || scheduleToUpdate.tanggal_kemoterapi !== tanggal_kemoterapi) {
-      const notifTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes');
+      const notifTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes').startOf('minute');
       const passedTime = notifTime.isBefore(moment()); // Check if updateTime is in the past or the same as now
 
       if (passedTime) {

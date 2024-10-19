@@ -181,7 +181,7 @@ const login = async (req, res) => {
         success: false,
         code: "FORBIDDEN",
         error: {
-          message: "Invalid email or password",
+          message: "Invalid email/telp or password",
         },
       });
     }

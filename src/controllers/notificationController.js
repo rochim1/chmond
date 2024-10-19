@@ -3,7 +3,8 @@ const {
 } = require("express-validator");
 const {
   Educations,
-  Recomendation
+  Recomendation,
+  DrugSchedule
 } = require("../models");
 const fs = require("fs");
 const path = require("path");
@@ -11,6 +12,10 @@ const {
   Op
 } = require("sequelize");
 const User = require("../models/userModel");
+const ChemoSchedule = require('../models/chemoSchModel');
+const {
+  NotificationSent, DrugConsumeTime
+} = require('../models/index');
 const firebaseConfig = '../services/messaging.service.js'
 // Create Education
 const storeFCMtoken = async (req, res) => {
@@ -134,8 +139,119 @@ const pushNotification = async ({
   }
 };
 
+const getAllNotifications = async (req, res) => {
+  try {
+    const {
+      page = 1, pageSize = 10
+    } = req.body;
+
+    let {
+      status,
+      id_user,
+    } =
+    req.body && req.body.filter ? req.body.filter : {
+      status: "active"
+    };
+
+    let whereClause = {
+      status,
+      ...(id_user && {
+        id_user
+      }),
+    };
+
+    if (req.body && req.body.filter && req.body.filter) {
+      const filter = req.body.filter
+      if (filter.tipe) {
+        whereClause.tipe = tipe
+      }
+    }
+
+    const offset = (page - 1) * pageSize;
+    const limit = parseInt(pageSize);
+
+    const {
+      count,
+      rows
+    } = await NotificationSent.findAndCountAll({
+      where: whereClause,
+      offset,
+      limit,
+    });
+
+    return res.status(200).json({
+      success: true,
+      totalItems: count,
+      totalPages: Math.ceil(count / pageSize),
+      currentPage: parseInt(page),
+      data: rows,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      code: "INTERNAL_SERVER_ERROR",
+      error: {
+        message: error.message,
+      },
+    });
+  }
+};
+
+const getOneNotification = async (req, res) => {
+  try {
+    const {
+      id_notification_sent
+    } = req.params;
+
+    const notificationData = await NotificationSent.findOne({
+      where: {
+        id_notification_sent,
+        status: "active",
+      },
+      include: [{
+        model: ChemoSchedule,
+        as: 'chemo_schedule',
+        required: false,
+      }, {
+        model: DrugConsumeTime, // Ensure correct model reference (Side_effects)
+        as: "drug_consume_time",
+        required: false,
+        include: [{
+          model: DrugSchedule, // Ensure correct model reference (Side_effects)
+          as: "drug_schedule",
+          required: false,
+        }]
+      }],
+    });
+
+    if (!notificationData) {
+      return res.status(404).json({
+        success: false,
+        code: "NOT_FOUND",
+        error: {
+          message: "notification not found",
+        },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: notificationData,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      code: "INTERNAL_SERVER_ERROR",
+      error: {
+        message: error.message,
+      },
+    });
+  }
+};
 
 module.exports = {
   storeFCMtoken,
-  pushNotification
+  pushNotification,
+  getAllNotifications,
+  getOneNotification
 };

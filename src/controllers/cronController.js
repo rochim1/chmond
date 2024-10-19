@@ -160,7 +160,7 @@ const triggerDrugNotif = async (req, res) => {
 // Function to schedule a notification for a specific schedule
 const scheduleNotification = async (schedule, tipe) => {
     try {
-
+        console.log(schedule)
         let job;
         if (tipe == 'chemotherapy') {
 
@@ -174,6 +174,7 @@ const scheduleNotification = async (schedule, tipe) => {
             // Schedule a job based on the user's notification time
             job = cron.schedule(notificationTime, () => {
                 // Call the notification sending logic here
+                console.log('masuk cron jadwal kemo terapi')
                 sendNotification(schedule, 'chemotherapy');
             });
 
@@ -267,15 +268,15 @@ const sendNotification = async (schedule, tipe) => {
             }
         })
 
-        if (!user || (user && !user.fcm_token)) {
-            return false;
-        }
+        // if (!user || (user && !user.fcm_token)) {
+        //     return false;
+        // }
 
 
         if (tipe == 'chemotherapy') {
 
             const attribute = {
-                fcm_token: user.fcm_token,
+                fcm_token: user.fcm_token || null,
                 title: 'pengingat jadwal kemoterapi',
                 body: `Sesi kemoterapi Anda akan dimulai dalam ${schedule.remember_before_minutes || 0 } menit. Siapkan diri Anda dengan baik.`,
                 receiver: schedule.id_user,
@@ -287,9 +288,14 @@ const sendNotification = async (schedule, tipe) => {
                 }
             }
 
-            notificationController.pushNotification(attribute)
+            if (user.fcm_token) {
+                notificationController.pushNotification(attribute)
+            }
 
-            const notification = await notificationSent.create(attribute)
+            const notification = await notificationSent.create({
+                ...attribute,
+                id_chemoSchedule: schedule.id_chemoSchedule ? schedule.id_chemoSchedule : null
+            })
 
             await ChemoSchedule.update({
                 is_sent: true
@@ -304,7 +310,7 @@ const sendNotification = async (schedule, tipe) => {
         } else if (tipe == 'drug_consume_time') {
 
             const attribute = {
-                fcm_token: user.fcm_token,
+                fcm_token: user.fcm_token || null,
                 title: 'pengingat jadwal minum obat',
                 body: `Saatnya minum obat ${schedule.name || ''}! Jangan lupa untuk menjaga kesehatan dengan mengikuti jadwal obat Anda.`,
                 receiver: schedule.id_user,
@@ -316,9 +322,14 @@ const sendNotification = async (schedule, tipe) => {
                 }
             }
 
-            notificationController.pushNotification(attribute)
+            if (user.fcm_token) {
+                notificationController.pushNotification(attribute)
+            }
 
-            const notification = await notificationSent.create(attribute)
+            const notification = await notificationSent.create({
+                ...attribute,
+                id_drug_consume_time: schedule.id_drug_consume_time ? schedule.id_drug_consume_time : null
+            })
 
             await DrugConsumeTime.update({
                 is_sent: true

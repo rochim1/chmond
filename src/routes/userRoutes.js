@@ -117,6 +117,9 @@ apiRouter.delete('/drug_consume_time/delete/:id_drug_consume_time', authMiddlewa
 // fcm token route
 apiRouter.post('/fcm/store', authMiddleware, validateFcm, notificationController.storeFCMtoken); // Create a new user
 
+// notification route
+apiRouter.get('/notification', authMiddleware, notificationController.getAllNotifications)
+apiRouter.get('/notification/:id_notification_sent', authMiddleware, notificationController.getOneNotification)
 
 // view router
 const jwt = require('jsonwebtoken');

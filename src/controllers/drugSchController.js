@@ -149,8 +149,10 @@ const createDrugSchedule = async (req, res) => {
             is_consumed: false
           })
 
-          const drugConsumeTime = moment(`${drugConsumeList.date} ${drugConsumeList.time}`, 'YYYY-MM-DD HH:mm');
-          if (drugConsumeTime.isSameOrAfter()) {
+          const drugConsumeTime = moment(`${drugConsumeList.date} ${drugConsumeList.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+          const currentTime = moment().startOf('minute'); // Ignore seconds and milliseconds for comparison
+
+          if (drugConsumeTime.isSameOrAfter(currentTime)) {
             cronController.scheduleNotification(drugConsumeList, 'drug_consume_time');
           }
         }
@@ -352,8 +354,11 @@ const updateDrugSchedule = async (req, res) => {
       });
 
       newCurrentDrugConsume.map(consume => {
-        const drugConsumeTime = moment(`${consume.date} ${consume.time}`, 'YYYY-MM-DD HH:mm');
-        if (drugConsumeTime.isSameOrAfter()) {
+
+        const drugConsumeTime = moment(`${consume.date} ${consume.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+        const currentTime = moment().startOf('minute'); // Ignore seconds and milliseconds for comparison
+
+        if (drugConsumeTime.isSameOrAfter(currentTime)) {
           cronController.scheduleNotification(consume, 'drug_consume_time');
         }
       });

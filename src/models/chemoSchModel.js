@@ -51,7 +51,7 @@ const ChemoSchedule = sequelize.define('chemo_schedules', {
   },
 }, {
   timestamps: true,
-  // tableName: 'chemo_schedules'
+  tableName: 'chemo_schedules'
 });
 
 module.exports = ChemoSchedule;

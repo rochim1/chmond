@@ -1,8 +1,12 @@
-const { DataTypes } = require('sequelize');
+const {
+  DataTypes
+} = require('sequelize');
 const sequelize = require('../config/database');
 const User = require('./userModel');
+const ChemoSchedule = require('./chemoSchModel');
+const DrugConsumeTime = require('./drugConsumeTimeModel');
 
-const notificationSent = sequelize.define('notification_sent', {
+const NotificationSent = sequelize.define('notification_sent', {
   id_notification_sent: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -20,7 +24,7 @@ const notificationSent = sequelize.define('notification_sent', {
     type: DataTypes.UUID,
     references: {
       model: User,
-      key: "id_user",
+      key: 'id_user',
     },
     allowNull: false,
   },
@@ -37,13 +41,28 @@ const notificationSent = sequelize.define('notification_sent', {
     defaultValue: 'active',
     allowNull: true,
   },
+  id_chemoSchedule: {
+    type: DataTypes.UUID,
+    references: {
+      model: ChemoSchedule,
+      key: 'id_chemoSchedule',
+    },
+    allowNull: true,
+  },
+  id_drug_consume_time: {
+    type: DataTypes.UUID,
+    references: {
+      model: DrugConsumeTime,
+      key: 'id_drug_consume_time',
+    },
+    allowNull: true,
+  },
   deletedAt: {
     type: DataTypes.DATE,
     allowNull: true,
-  }
-},
-{
-  timestamps: true,
+  },
+}, {
+  timestamps: true
 });
 
-module.exports = notificationSent;
+module.exports = NotificationSent;
