@@ -141,7 +141,7 @@ const createDrugSchedule = async (req, res) => {
 
       for (const date of daysArray) {
         for (const time of consume_time) {
-          const drugConsumeList = DrugConsumeTime.create({ // not using await
+          let drugConsumeList = DrugConsumeTime.create({ // not using await
             id_drug_schedule: newDrugSchedule.id_drug_schedule,
             name: newDrugSchedule.drug_name,
             time: time,
@@ -150,9 +150,11 @@ const createDrugSchedule = async (req, res) => {
             is_consumed: false
           })
 
-          const drugConsumeTime = momentz(`${drugConsumeList.date} ${drugConsumeList.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
-          const currentTime = moment().startOf('minute'); // Ignore seconds and milliseconds for comparison
-
+          const drugConsumeTime = momentz(`${date} ${time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+          const currentTime = moment().startOf('minute'); 
+          drugConsumeList.date = date;
+          drugConsumeList.time = time;
+          
           if (drugConsumeTime.isSameOrAfter(currentTime)) {
             cronController.scheduleNotification(drugConsumeList, 'drug_consume_time');
           }
