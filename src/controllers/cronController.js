@@ -330,7 +330,7 @@ const sendNotification = async (schedule, tipe) => {
 
         if (tipe == 'chemotherapy') {
 
-            const attribute = {
+            let attribute = {
                 fcm_token: user.fcm_token || null,
                 title: 'pengingat jadwal kemoterapi',
                 body: `Sesi kemoterapi Anda akan dimulai dalam ${schedule.remember_before_minutes || 0 } menit. Siapkan diri Anda dengan baik.`,
@@ -339,20 +339,21 @@ const sendNotification = async (schedule, tipe) => {
                 tipe: 'chemotherapy',
                 attribute: {
                     link: '/notification'
-                },
-                data: {
-                    id: schedule.id_chemoSchedule,
                 }
-            }
-
-            if (user.fcm_token) {
-                notificationController.pushNotification(attribute)
             }
 
             const notification = await notificationSent.create({
                 ...attribute,
                 id_chemoSchedule: schedule.id_chemoSchedule ? schedule.id_chemoSchedule : null
             })
+
+            attribute.data = { 
+                id: notification.id_notification_sent
+            }
+
+            if (user.fcm_token) {
+                notificationController.pushNotification(attribute)
+            }
 
             await ChemoSchedule.update({
                 is_sent: true
@@ -374,22 +375,22 @@ const sendNotification = async (schedule, tipe) => {
                 sender: 'system',
                 tipe: 'drug_consume_time',
                 attribute: {
-                    id: schedule.id_drug_consume_time,
                     link: '/notification'
-                },
-                data: {
-                    id: schedule.id_drug_consume_time,
                 }
-            }
-
-            if (user.fcm_token) {
-                notificationController.pushNotification(attribute)
             }
 
             const notification = await notificationSent.create({
                 ...attribute,
                 id_drug_consume_time: schedule.id_drug_consume_time ? schedule.id_drug_consume_time : null
-            })
+            });
+
+            attribute.data = { 
+                id: notification.id_notification_sent
+            }
+
+            if (user.fcm_token) {
+                notificationController.pushNotification(attribute)
+            }
 
             await DrugConsumeTime.update({
                 is_sent: true
