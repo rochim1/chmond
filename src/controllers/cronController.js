@@ -21,17 +21,44 @@ const listCronJobs = [{
     func: ['triggerChemoTerapyNotif']
 }];
 
+// Function to convert cron time to WIB
+// Function to convert cron time to WIB
+const convertToWIB = (cronExpression) => {
+    // Split the cron expression into its components
+    const cronParts = cronExpression.split(' ');
+
+    // Check if it includes seconds and set the variables accordingly
+    let second, minute, hour, day, month, dayOfWeek;
+
+    if (cronParts.length === 6) {
+        // Includes seconds
+        [second, minute, hour, day, month, dayOfWeek] = cronParts;
+    } else if (cronParts.length === 5) {
+        // Does not include seconds
+        [minute, hour, day, month, dayOfWeek] = cronParts;
+        second = 0; // Default to 0 if not specified
+    } else {
+        throw new Error('Invalid cron expression');
+    }
+
+    // Create a moment object in server time (assuming CDT here as an example)
+    const serverTime = moment.tz({ second, minute, hour, day, month: month - 1 }, 'America/Chicago');
+
+    // Convert to WIB (Asia/Jakarta)
+    const wibTime = serverTime.clone().tz('Asia/Jakarta');
+
+    // Reformat the cron expression using WIB values
+    const newCronExpression = `${wibTime.second()} ${wibTime.minute()} ${wibTime.hour()} ${wibTime.date()} ${wibTime.month() + 1} ${dayOfWeek ? dayOfWeek : '*'}`;
+
+    return newCronExpression;
+};
+
 // *****************************************************************************
 const initializeCronJobs = () => {
     // Initialize cron chemo_jobs at server start
     initializeImmediatlyNotifSchdule();
     initializeImmediatlyNotifSchduleDrug();
 
-    let num = 0
-    cron.schedule('* 30 18 19 10 *', () => {
-        num++
-        console.log('test cron job per detik', num)
-    });
     // Schedule the job to recheck and update all chemo_jobs every midnight
     initializeMidnightJob();
 };
@@ -42,8 +69,12 @@ let drug_jobs = {};
 const initializeMidnightJob = () => {
     // Schedule the job to run every midnight
     const cronInfo = listCronJobs.find(data => data.trigger_name == "update_chemo_terapy_notif");
+    let trigger_date = cronInfo.trigger_date;
+    if (process.env.environment == 'production') {
+        trigger_date = convertToWIB(job.trigger_date)
+    }
 
-    const job = cron.schedule(cronInfo.trigger_date, () => {
+    const job = cron.schedule(trigger_date, () => {
         initializeImmediatlyNotifSchdule(); // Call the function to stop and update chemo_jobs at midnight
     });
 
@@ -108,7 +139,10 @@ const triggerChemoTerapyNotif = async (req, res) => {
             // Process each schedule
             for (let schedule of schedules) {
                 // Schedule notifications for each schedule
-                const notifTime = moment(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(schedule.remember_before_minutes, 'minutes').startOf('minute');
+                let notifTime = momentz(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(schedule.remember_before_minutes, 'minutes').startOf('minute');
+                if (process.env.environment == 'production') {
+                    notifTime = notifTime.clone().tz('America/Chicago');
+                }
                 if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
                     await scheduleNotification(schedule, 'chemotherapy');
                 }
@@ -155,7 +189,10 @@ const triggerDrugNotif = async (req, res) => {
             // Process each schedule
             for (let schedule of schedules) {
                 // Schedule notifications for each schedule
-                const notifTime = moment(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+                const notifTime = momentz(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+                if (process.env.environment == 'production') {
+                    notifTime = notifTime.clone().tz('America/Chicago');
+                }
                 if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
                     await scheduleNotification(schedule, 'DrugConsumeTime');
                 }
@@ -185,11 +222,10 @@ const scheduleNotification = async (schedule, tipe) => {
             }
             // Format the datetime to match the cron format (seconds minutes hours day month day-of-week)
             const notificationTime = chemoDateTime.format('s m H D M * YYYY');
-            console.log(notificationTime)
             // Schedule a job based on the user's notification time
             job = cron.schedule(notificationTime, () => {
                 // Call the notification sending logic here
-                console.log('masuk cron jadwal kemo terapi')
+                console.log('masuk cron jadwal kemo terapi', notificationTime)
                 sendNotification(schedule, 'chemotherapy');
             });
 

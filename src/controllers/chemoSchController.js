@@ -4,6 +4,7 @@ const {
 const ChemoSchedule = require("../models/chemoSchModel");
 const cronController = require("./cronController");
 const moment = require('moment');
+const momentz = require('moment-timezone');
 
 const createChemoSchedule = async (req, res) => {
   try {
@@ -28,7 +29,7 @@ const createChemoSchedule = async (req, res) => {
       id_user,
       note,
     } = req.body;
-    
+
     if (!id_user) {
       id_user = req.user.id_user;
     }
@@ -43,8 +44,11 @@ const createChemoSchedule = async (req, res) => {
       note,
     });
 
-    const notifTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes').startOf('minute');
-    console.log(notifTime.isSameOrAfter(moment().startOf('minute')))
+    let notifTime = momentz(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes').startOf('minute');
+    if (process.env.environment == 'production') {
+      notifTime = notifTime.clone().tz('America/Chicago');
+    }
+
     if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
       await cronController.scheduleNotification(newChemoSchedule, 'chemotherapy');
     } else {
@@ -124,7 +128,10 @@ const updateChemoSchedule = async (req, res) => {
     }
 
     if (scheduleToUpdate.waktu_kemoterapi !== waktu_kemoterapi || scheduleToUpdate.tanggal_kemoterapi !== tanggal_kemoterapi) {
-      const notifTime = moment(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes').startOf('minute');
+      const notifTime = momentz(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes').startOf('minute');
+      if (process.env.environment == 'production') {
+        notifTime = notifTime.clone().tz('America/Chicago');
+      }
       const passedTime = notifTime.isBefore(moment()); // Check if updateTime is in the past or the same as now
 
       if (passedTime) {
@@ -136,14 +143,14 @@ const updateChemoSchedule = async (req, res) => {
         //   },
         // });
         // still can update to past, but cron job is deleted
-        cronController.stopScheduledJob(scheduleToUpdate ,'chemotherapy')
+        cronController.stopScheduledJob(scheduleToUpdate, 'chemotherapy')
       }
     }
 
     if (!id_user) {
       id_user = scheduleToUpdate.id_user || req.user.id_user;
     }
-    
+
     // Find and update the ChemoSchedule
     const [updated] = await ChemoSchedule.update({
       tujuan_kemoterapi,

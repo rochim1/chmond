@@ -6,6 +6,7 @@ const {
   DrugConsumeTime
 } = require('../models/index');
 const moment = require('moment');
+const momentz = require('moment-timezone');
 const {
   Op
 } = require('sequelize'); // Import Sequelize operators
@@ -149,7 +150,10 @@ const createDrugSchedule = async (req, res) => {
             is_consumed: false
           })
 
-          const drugConsumeTime = moment(`${drugConsumeList.date} ${drugConsumeList.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+          const drugConsumeTime = momentz(`${drugConsumeList.date} ${drugConsumeList.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+          if (process.env.environment == 'production') {
+            drugConsumeTime = drugConsumeTime.clone().tz('America/Chicago');
+          }
           const currentTime = moment().startOf('minute'); // Ignore seconds and milliseconds for comparison
 
           if (drugConsumeTime.isSameOrAfter(currentTime)) {
@@ -355,7 +359,10 @@ const updateDrugSchedule = async (req, res) => {
 
       newCurrentDrugConsume.map(consume => {
 
-        const drugConsumeTime = moment(`${consume.date} ${consume.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+        const drugConsumeTime = momentz(`${consume.date} ${consume.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+        if (process.env.environment == 'production') {
+          drugConsumeTime = drugConsumeTime.clone().tz('America/Chicago');
+        }
         const currentTime = moment().startOf('minute'); // Ignore seconds and milliseconds for comparison
 
         if (drugConsumeTime.isSameOrAfter(currentTime)) {

@@ -6,6 +6,7 @@ const {
   DrugConsumeTime
 } = require('../models/index');
 const moment = require('moment');
+const momentz = require('moment-timezone');
 const {
   Op
 } = require('sequelize'); // Import Sequelize operators
@@ -24,7 +25,13 @@ const createDrugConsumeTime = async (req, res) => {
   }
 
   try {
-    let { id_drug_schedule, name, time, id_user, date } = req.body;
+    let {
+      id_drug_schedule,
+      name,
+      time,
+      id_user,
+      date
+    } = req.body;
     if (!id_user) {
       id_user = req.user.id_user;
     }
@@ -43,7 +50,7 @@ const createDrugConsumeTime = async (req, res) => {
         message: 'Drug schedule not found',
       });
     }
-    
+
     name = name || drugSchedule.name;
     const newDrugConsumeTime = await DrugConsumeTime.create({
       id_drug_schedule,
@@ -53,7 +60,16 @@ const createDrugConsumeTime = async (req, res) => {
       date
     });
 
-    cronController.scheduleNotification(newDrugConsumeTime, 'drug_consume_time');
+    const drugConsumeTime = momentz(`${date} ${time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+    if (process.env.environment == 'production') {
+      drugConsumeTime = drugConsumeTime.clone().tz('America/Chicago');
+    }
+    const currentTime = moment().startOf('minute'); // Ignore seconds and milliseconds for comparison
+
+    if (drugConsumeTime.isSameOrAfter(currentTime)) {
+      cronController.scheduleNotification(newDrugConsumeTime, 'drug_consume_time');
+    }
+
 
     return res.status(201).json({
       success: true,
@@ -72,31 +88,50 @@ const createDrugConsumeTime = async (req, res) => {
 // GET All DrugConsumeTimes (with optional filters)
 const getAllDrugConsumeTimes = async (req, res) => {
   try {
-    const { page = 1, pageSize = 10 } = req.query;
-    const { id_user, id_drug_schedule, date, is_consumed, status } = req.body.filter || {};
+    const {
+      page = 1, pageSize = 10
+    } = req.query;
+    const {
+      id_user,
+      id_drug_schedule,
+      date,
+      is_consumed,
+      status
+    } = req.body.filter || {};
 
     const whereClause = {
-      ...(id_user && { id_user }),
-      ...(id_drug_schedule && { id_drug_schedule }),
-      ...(date && { date }),
-      ...(is_consumed !== undefined && { is_consumed }),
-      ...(status && { status })
+      ...(id_user && {
+        id_user
+      }),
+      ...(id_drug_schedule && {
+        id_drug_schedule
+      }),
+      ...(date && {
+        date
+      }),
+      ...(is_consumed !== undefined && {
+        is_consumed
+      }),
+      ...(status && {
+        status
+      })
     };
 
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const { count, rows } = await DrugConsumeTime.findAndCountAll({
+    const {
+      count,
+      rows
+    } = await DrugConsumeTime.findAndCountAll({
       where: whereClause,
       offset,
       limit,
-      include: [
-        {
-          model: DrugSchedule,
-          as: 'drug_schedule',  // Optional alias
-          required: true,      // Inner join, set to false for outer join
-        },
-      ],
+      include: [{
+        model: DrugSchedule,
+        as: 'drug_schedule', // Optional alias
+        required: true, // Inner join, set to false for outer join
+      }, ],
     });
 
     return res.status(200).json({
@@ -118,22 +153,22 @@ const getAllDrugConsumeTimes = async (req, res) => {
 // GET DrugConsumeTime by ID
 const GetOneDrugConsumeTime = async (req, res) => {
   try {
-    const { id_drug_consume_time } = req.params;
+    const {
+      id_drug_consume_time
+    } = req.params;
     let drugConsumeTime = await DrugConsumeTime.findOne({
       where: {
         id_drug_consume_time,
         status: "active",
       },
-      include: [
-        {
-          model: DrugSchedule,
-          as: 'drug_schedule',  // Optional alias
-          required: true,      // Inner join, set to false for outer join
-          where: {
-            status: 'active'
-          }
-        },
-      ],
+      include: [{
+        model: DrugSchedule,
+        as: 'drug_schedule', // Optional alias
+        required: true, // Inner join, set to false for outer join
+        where: {
+          status: 'active'
+        }
+      }, ],
     });
 
     if (!drugConsumeTime) {
@@ -177,9 +212,11 @@ const updateDrugConsumeTime = async (req, res) => {
   }
 
   try {
-    const { id_drug_consume_time } = req.params;
+    const {
+      id_drug_consume_time
+    } = req.params;
     const updatedData = req.body;
-    
+
     let drugConsumeTime = await DrugConsumeTime.findOne({
       where: {
         id_drug_consume_time,
@@ -195,7 +232,7 @@ const updateDrugConsumeTime = async (req, res) => {
       });
     }
 
-    await drugConsumeTime.update(updatedData);
+    await DrugConsumeTime.update(updatedData);
 
     drugConsumeTime = await DrugConsumeTime.findOne({
       where: {
@@ -204,7 +241,15 @@ const updateDrugConsumeTime = async (req, res) => {
       }
     });
 
-    cronController.updateNotificationSchedule(drugConsumeTime, 'drug_consume_time')
+    consumeTime = momentz(`${drugConsumeTime.date} ${drugConsumeTime.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
+    if (process.env.environment == 'production') {
+      consumeTime = consumeTime.clone().tz('America/Chicago');
+    }
+    const currentTime = moment().startOf('minute'); // Ignore seconds and milliseconds for comparison
+
+    if (consumeTime.isSameOrAfter(currentTime)) {
+      cronController.scheduleNotification(drugConsumeTime, 'drug_consume_time');
+    }
 
     return res.status(200).json({
       success: true,
@@ -223,7 +268,9 @@ const updateDrugConsumeTime = async (req, res) => {
 // DELETE DrugConsumeTime by ID (Soft delete)
 const deleteDrugConsumeTime = async (req, res) => {
   try {
-    const { id_drug_consume_time } = req.params;
+    const {
+      id_drug_consume_time
+    } = req.params;
     let drugConsumeTime = await DrugConsumeTime.findOne({
       where: {
         id_drug_consume_time,
@@ -239,10 +286,13 @@ const deleteDrugConsumeTime = async (req, res) => {
       });
     }
 
-    await drugConsumeTime.update({ status: 'deleted', deletedAt: new Date() });
+    await DrugConsumeTime.update({
+      status: 'deleted',
+      deletedAt: new Date()
+    });
 
     cronController.stopScheduledJob(id_drug_consume_time, 'drug_consume_time');
-    
+
     return res.status(200).json({
       success: true,
       message: 'Drug consume time deleted successfully',
