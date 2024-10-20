@@ -58,9 +58,9 @@ const pushNotification = async ({
         token: fcm_token,
       };
 
-      console.log(message)
+      console.log('message', message)
       const response = await admin.messaging().send(message);
-      console.log(response)
+      console.log('response', response)
       return {
         success: true,
         response,
