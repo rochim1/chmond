@@ -70,9 +70,6 @@ const initializeMidnightJob = () => {
     // Schedule the job to run every midnight
     const cronInfo = listCronJobs.find(data => data.trigger_name == "update_chemo_terapy_notif");
     let trigger_date = cronInfo.trigger_date;
-    if (process.env.environment == 'production') {
-        trigger_date = convertToWIB(job.trigger_date)
-    }
 
     const job = cron.schedule(trigger_date, () => {
         initializeImmediatlyNotifSchdule(); // Call the function to stop and update chemo_jobs at midnight
@@ -140,9 +137,7 @@ const triggerChemoTerapyNotif = async (req, res) => {
             for (let schedule of schedules) {
                 // Schedule notifications for each schedule
                 let notifTime = momentz(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(schedule.remember_before_minutes, 'minutes').startOf('minute');
-                if (process.env.environment == 'production') {
-                    notifTime = notifTime.clone().tz('America/Chicago');
-                }
+
                 if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
                     await scheduleNotification(schedule, 'chemotherapy');
                 }
@@ -190,9 +185,7 @@ const triggerDrugNotif = async (req, res) => {
             for (let schedule of schedules) {
                 // Schedule notifications for each schedule
                 const notifTime = momentz(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
-                if (process.env.environment == 'production') {
-                    notifTime = notifTime.clone().tz('America/Chicago');
-                }
+
                 if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
                     await scheduleNotification(schedule, 'DrugConsumeTime');
                 }
@@ -213,9 +206,6 @@ const scheduleNotification = async (schedule, tipe) => {
         if (tipe == 'chemotherapy') {
 
             let chemoDateTime = momentz.tz(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm', 'Asia/Jakarta');
-            if (process.env.environment == "production") {
-                chemoDateTime = chemoDateTime.clone().tz('America/Chicago'); // cz server time in america
-            }
 
             if (schedule.remember_before_minutes) {
                 chemoDateTime = chemoDateTime.subtract(schedule.remember_before_minutes, 'minutes');
@@ -235,9 +225,6 @@ const scheduleNotification = async (schedule, tipe) => {
         } else if (tipe == 'drug_consume_time') {
 
             let drugConsumeTime = momentz.tz(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm', 'Asia/Jakarta');
-            if (process.env.environment == "production") {
-                drugConsumeTime = drugConsumeTime.clone().tz('America/Chicago'); // cz server time in america
-            }
 
             // const periode = schedule.drug_schedule && schedule.drug_schedule.periode ? schedule.drug_schedule.periode : ''
 

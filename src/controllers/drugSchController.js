@@ -151,9 +151,6 @@ const createDrugSchedule = async (req, res) => {
           })
 
           const drugConsumeTime = momentz(`${drugConsumeList.date} ${drugConsumeList.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
-          if (process.env.environment == 'production') {
-            drugConsumeTime = drugConsumeTime.clone().tz('America/Chicago');
-          }
           const currentTime = moment().startOf('minute'); // Ignore seconds and milliseconds for comparison
 
           if (drugConsumeTime.isSameOrAfter(currentTime)) {
@@ -360,9 +357,6 @@ const updateDrugSchedule = async (req, res) => {
       newCurrentDrugConsume.map(consume => {
 
         const drugConsumeTime = momentz(`${consume.date} ${consume.time}`, 'YYYY-MM-DD HH:mm').startOf('minute');
-        if (process.env.environment == 'production') {
-          drugConsumeTime = drugConsumeTime.clone().tz('America/Chicago');
-        }
         const currentTime = moment().startOf('minute'); // Ignore seconds and milliseconds for comparison
 
         if (drugConsumeTime.isSameOrAfter(currentTime)) {
