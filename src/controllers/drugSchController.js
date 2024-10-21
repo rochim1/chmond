@@ -169,6 +169,7 @@ const createDrugSchedule = async (req, res) => {
       data: newDrugSchedule
     });
   } catch (error) {
+    console.log(error)
     return res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
