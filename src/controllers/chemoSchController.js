@@ -19,7 +19,7 @@ const createChemoSchedule = async (req, res) => {
         },
       });
     }
-    console.log(req.body)
+
     // Extract data from request body
     let {
       tujuan_kemoterapi,
