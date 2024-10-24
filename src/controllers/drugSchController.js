@@ -10,7 +10,6 @@ const momentz = require('moment-timezone');
 const {
   Op
 } = require('sequelize'); // Import Sequelize operators
-const drugConsumeTime = require('../models/drugConsumeTimeModel');
 const cronController = require('./cronController');
 
 // Create DrugSchedule
@@ -688,7 +687,7 @@ const deleteDrugSchedule = async (req, res) => {
     });
 
     // Soft-delete the related drug consume times by updating their status and deletedAt
-    await drugConsumeTime.update({
+    await DrugConsumeTime.update({
       status: 'deleted',
       deletedAt: new Date(),
     }, {
