@@ -229,7 +229,7 @@ const updateDrugConsumeTime = async (req, res) => {
       });
     }
 
-    await DrugConsumeTime.update(updatedData);
+    await drugConsumeTime.update(updatedData);
 
     drugConsumeTime = await DrugConsumeTime.findOne({
       where: {
