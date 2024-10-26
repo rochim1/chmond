@@ -33,7 +33,6 @@ const uploadMiddleware = require('../middlewares/uploadMiddleware');
 const validateFcm = require('../validations/fcmValidator');
 
 
-
 const apiRouter = express.Router();
 const api = express.Router();
 
@@ -140,14 +139,13 @@ async function emailIsAlreadyVerified(email) {
     });
 }
 
-
 api.get('/verify_email/:token', async (req, res) => {
     const {
         token
     } = req.params;
     let status = 'success'; // Default status
     let title;
-
+    console.log(token)
     try {
         // Verify the JWT token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -277,8 +275,6 @@ api.get('/update_password/:token', async (req, res) => {
 
     // Render the dynamic page with title and status
 });
-
-
 
 module.exports = {
     apiRouter,

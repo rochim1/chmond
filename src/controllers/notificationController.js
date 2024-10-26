@@ -48,6 +48,18 @@ const pushNotification = async ({
       webpush: {
         fcmOptions: attribute,
       },
+      android: {
+        notification: {
+          sound: 'custom_midi_sound', // Name of your MIDI sound file
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'custom_midi_sound.mid', // Specify custom sound for iOS
+          },
+        },
+      },
       data: data
     };
 
