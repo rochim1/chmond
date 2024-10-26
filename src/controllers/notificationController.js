@@ -171,7 +171,7 @@ const getAllNotifications = async (req, res) => {
     let whereClause = {
       status,
       ...(id_user && {
-        id_user
+        receiver: id_user
       }),
     };
 
@@ -184,7 +184,7 @@ const getAllNotifications = async (req, res) => {
 
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
-
+    console.log(whereClause)
     const {
       count,
       rows
