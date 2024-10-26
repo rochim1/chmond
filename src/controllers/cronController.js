@@ -319,7 +319,7 @@ const sendNotification = async (schedule, tipe) => {
 
             let attribute = {
                 fcm_token: user.fcm_token || null,
-                title: 'pengingat jadwal kunjungan',
+                title: '⏰ pengingat jadwal kunjungan',
                 body: `Sesi ${schedule.tujuan_kemoterapi} Anda akan dimulai dalam ${schedule.remember_before_minutes || 0 } menit. Siapkan diri Anda dengan baik.`,
                 receiver: schedule.id_user,
                 sender: 'system',
@@ -356,7 +356,7 @@ const sendNotification = async (schedule, tipe) => {
 
             const attribute = {
                 fcm_token: user.fcm_token || null,
-                title: 'pengingat jadwal minum obat',
+                title: '⏰ pengingat jadwal minum obat',
                 body: `Saatnya minum obat ${schedule.name || ''}! Jangan lupa untuk menjaga kesehatan dengan mengikuti jadwal obat Anda.`,
                 receiver: schedule.id_user,
                 sender: 'system',
