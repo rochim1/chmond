@@ -140,7 +140,7 @@ const createDrugSchedule = async (req, res) => {
 
       for (const date of daysArray) {
         for (const time of consume_time) {
-          let drugConsumeList = DrugConsumeTime.create({ // not using await
+          let drugConsumeList = await DrugConsumeTime.create({ // not using await
             id_drug_schedule: newDrugSchedule.id_drug_schedule,
             name: newDrugSchedule.drug_name,
             time: time,
