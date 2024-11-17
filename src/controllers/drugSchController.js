@@ -137,7 +137,7 @@ const createDrugSchedule = async (req, res) => {
           }
         }
       }
-
+      console.log(daysArray);
       for (const date of daysArray) {
         for (const time of consume_time) {
           let drugConsumeList = await DrugConsumeTime.create({ // not using await
