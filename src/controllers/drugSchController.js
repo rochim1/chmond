@@ -83,7 +83,7 @@ const createDrugSchedule = async (req, res) => {
       first_date_consume = moment().format('YYYY-MM-DD'); // Current date
     }
 
-    if (long_consume) {
+    if (!long_consume) {
       // Calculate the number of days from the first consumption date to the last day of the current month
       const last_day_of_month = moment().endOf('month'); // Get the last day of the current month
       long_consume = last_day_of_month.diff(moment(first_date_consume, 'YYYY-MM-DD'), 'days'); // Calculate the difference in days
@@ -101,7 +101,6 @@ const createDrugSchedule = async (req, res) => {
       // Loop through from the start date to the current date
       if (periode == 'setiap_hari') {
         for (let date = startDate; date.isSameOrBefore(endDate); date.add(1, 'days')) {
-          console.log(date.format('YYYY-MM-DD'))
           daysArray.push(date.format('YYYY-MM-DD'));
         }
       } else if (periode == 'hari_pilihan') {
@@ -137,7 +136,7 @@ const createDrugSchedule = async (req, res) => {
           }
         }
       }
-      console.log(daysArray);
+      
       for (const date of daysArray) {
         for (const time of consume_time) {
           let drugConsumeList = await DrugConsumeTime.create({ // not using await
