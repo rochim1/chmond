@@ -381,8 +381,7 @@ const getAllUserSideEffectsGroup = async (req, res) => {
       if (!acc[groupKey]) {
         acc[groupKey] = {
           ...item.toJSON(), // Convert Sequelize instance to plain object
-
-
+          side_effects: item.sideEffect,
           charts: {
             severity: [{
               id_user_side_effect: item.id_user_side_effect,
@@ -404,6 +403,8 @@ const getAllUserSideEffectsGroup = async (req, res) => {
             }]
           }, // Initialize charts as an empty array
         };
+
+        delete acc[groupKey].sideEffect
       } else {
         acc[groupKey].charts.severity.push({
           id_user_side_effect: item.id_user_side_effect,
@@ -453,6 +454,7 @@ const getAllUserSideEffectsGroup = async (req, res) => {
     });
   }
 };
+
 const sequelize = require('../config/database');
 const getAllUserSideEffectsGroupBySQL = async (req, res) => {
   try {
@@ -517,7 +519,7 @@ const getAllUserSideEffectsGroupBySQL = async (req, res) => {
           'effect_detail', s.effect_detail,  
           'status', s.status,  
           'deletedAt', s.deletedAt        
-        ) AS sideEffect
+        ) AS side_effects
       FROM user_side_effects u
       LEFT JOIN side_effects s ON u.id_side_effect = s.id_side_effect
       WHERE u.status = :status
@@ -558,7 +560,7 @@ const getAllUserSideEffectsGroupBySQL = async (req, res) => {
       return {
         id_side_effect: item.id_side_effect,
         cycle_to: item.cycle_to,
-        sideEffect: JSON.parse(`[${item.sideEffect}]`)[0],
+        side_effects: JSON.parse(`[${item.side_effects}]`)[0],
         charts: {
           severity: JSON.parse(`[${item.severity_data}]`), // Convert to an array
           frekuensi: JSON.parse(`[${item.frekuensi_data}]`),
