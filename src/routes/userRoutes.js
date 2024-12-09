@@ -85,6 +85,8 @@ apiRouter.put('/chemo/update/:id_chemoSchedule', authMiddleware, chemoSchValidat
 apiRouter.delete('/chemo/delete/:id_chemoSchedule', authMiddleware, chemoSchController.deleteChemoSchedule); // Delete user
 
 // user Side Effect Route
+apiRouter.get('/user_side_effect_group_pagination', authMiddleware, userSideEffectController.getAllUserSideEffectsGroupBySQL); // View all user
+apiRouter.get('/user_side_effect_group', authMiddleware, userSideEffectController.getAllUserSideEffectsGroup); // View all user
 apiRouter.get('/user_side_effect', authMiddleware, userSideEffectController.getAllUserSideEffects); // View all user
 apiRouter.get('/user_side_effect/:id_user_side_effect', authMiddleware, userSideEffectController.getOneUserSideEffect); // View user
 apiRouter.post('/user_side_effect/create', authMiddleware, userSideEffectValidator, userSideEffectController.createUserSideEffect); // Create a new user
