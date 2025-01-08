@@ -17,7 +17,9 @@ const {
 const jwt = require("jsonwebtoken");
 const validator = require('validator');
 const e = require("express");
-const { Op } = require("sequelize");
+const {
+  Op
+} = require("sequelize");
 
 const getOneUsers = async (req, res) => {
   try {
@@ -378,13 +380,17 @@ function formatPhoneNumberToLocal(phoneNumber, regionCode) {
   }
 }
 
+const generateRandomPassword = () => {
+  return Math.random().toString(36).slice(-8); // Generates an 8-character random string
+};
+
 const verifyWithGoogle = async (req, res) => {
   try {
 
     let {
       id_token
     } = req.body;
-    
+
     // Verifikasi ID token untuk mendapatk  an informasi pengguna
     const ticket = await client.verifyIdToken({
       idToken: id_token,
@@ -392,7 +398,6 @@ const verifyWithGoogle = async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    console.log(payload)
     // Anda dapat mengakses informasi pengguna di payload
     const userInfo = {
       email: payload.email,
@@ -421,7 +426,8 @@ const verifyWithGoogle = async (req, res) => {
     });
 
     if (!user) {
-      let hashPassword = encrypt('random_string', process.env.SALT);
+      const randomPassword = generateRandomPassword();
+      const hashPassword = encrypt(randomPassword, process.env.SALT);
 
       user = await User.create({
         email: userInfo.email,
@@ -434,7 +440,9 @@ const verifyWithGoogle = async (req, res) => {
       if (user.email) {
         const emailResponse = sendEmailFunction(
           userInfo.email,
-          "register_oauth", {}, // params are dynamically added inside the function
+          "register_oauth", {
+            password: randomPassword
+          }, // params are dynamically added inside the function
           "ind" // or 'eng' for English template
         );
       }
@@ -457,13 +465,23 @@ const verifyWithGoogle = async (req, res) => {
 
   } catch (error) {
     console.log(error)
-    res.status(500).json({
-      success: false,
-      message: "INTERNAL_SERVER_ERROR",
-      error: {
-        message: error.message,
-      },
-    });
+    if (error.name === "SequelizeUniqueConstraintError") {
+      res.status(500).json({
+        success: false,
+        message: "INTERNAL_SERVER_ERROR",
+        error: {
+          message: error.errors[0].message,
+        },
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "INTERNAL_SERVER_ERROR",
+        error: {
+          message: error.message,
+        },
+      });
+    }
   }
 };
 

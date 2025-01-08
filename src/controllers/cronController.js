@@ -229,10 +229,11 @@ const scheduleNotification = async (schedule, tipe) => {
             // const periode = schedule.drug_schedule && schedule.drug_schedule.periode ? schedule.drug_schedule.periode : ''
 
             const notificationTime = drugConsumeTime.format('s m H D M * YYYY');
-            
+            console.log(notificationTime)
             // Schedule a job based on the user's notification time
             job = cron.schedule(notificationTime, () => {
                 // Call the notification sending logic here
+                console.log('send_notif consume time on', moment)
                 sendNotification(schedule, 'drug_consume_time');
             });
 

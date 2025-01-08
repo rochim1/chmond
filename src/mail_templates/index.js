@@ -39,6 +39,7 @@ const mailOptions = [{
         template_name: 'register_oauth',
         require_params: {
             name: 'name',
+            password: 'password',
         },
         from: process.env.EMAIL,
         receiver_role: ['user'],

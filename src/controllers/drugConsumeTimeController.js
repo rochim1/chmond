@@ -82,70 +82,109 @@ const createDrugConsumeTime = async (req, res) => {
   }
 };
 
-// GET All DrugConsumeTimes (with optional filters)
 const getAllDrugConsumeTimes = async (req, res) => {
   try {
+    // Extract query parameters for pagination
     const {
-      page = 1, pageSize = 10
-    } = req.query;
+      page,
+      pageSize
+    } = req.body;
+
+    // Extract filter parameters from the request body
     const {
       id_user,
       id_drug_schedule,
       date,
       is_consumed,
-      status
+      status,
+      dateType,
     } = req.body.filter || {};
 
-    const whereClause = {
+    // Initialize where clause
+    let whereClause = {
       ...(id_user && {
         id_user
       }),
       ...(id_drug_schedule && {
         id_drug_schedule
       }),
-      ...(date && {
-        date
-      }),
       ...(is_consumed !== undefined && {
         is_consumed
       }),
       ...(status && {
         status
-      })
+      }),
     };
 
-    const offset = (page - 1) * pageSize;
-    const limit = parseInt(pageSize);
+    // Handle date filtering with Moment.js
+    if (date) {
+      if (dateType === 'bulanan') {
+        // Filter for the specified month
+        const startOfMonth = moment(date, 'YYYY-MM').startOf('month').format('YYYY-MM-DD');
+        const endOfMonth = moment(date, 'YYYY-MM').endOf('month').format('YYYY-MM-DD');
 
+        whereClause = {
+          ...whereClause,
+          date: {
+            [Op.gte]: startOfMonth,
+            [Op.lte]: endOfMonth,
+          },
+        };
+      } else {
+        // Filter for the exact date
+        whereClause = {
+          ...whereClause,
+          date: {
+            [Op.eq]: moment(date).format('YYYY-MM-DD'),
+          },
+        };
+      }
+    }
+
+    // Handle pagination logic: get all data if page or pageSize is not provided
+    const offset = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : null;
+    const limit = pageSize ? parseInt(pageSize) : null;
+
+    // Query the database
     const {
       count,
       rows
     } = await DrugConsumeTime.findAndCountAll({
       where: whereClause,
-      offset,
-      limit,
+      offset: offset !== null ? offset : undefined, // Only include if pagination is applied
+      limit: limit !== null ? limit : undefined, // Only include if pagination is applied
       include: [{
         model: DrugSchedule,
         as: 'drug_schedule', // Optional alias
         required: true, // Inner join, set to false for outer join
       }, ],
+      order: [
+        ['createdAt', 'DESC']
+      ],
     });
 
+    // Calculate totalPages only if pagination is applied
+    const totalPages = pageSize ? Math.ceil(count / pageSize) : 1;
+
+    // Send the response with pagination details
     return res.status(200).json({
       success: true,
       totalItems: count,
-      totalPages: Math.ceil(count / pageSize),
-      currentPage: parseInt(page),
+      totalPages,
+      currentPage: page ? parseInt(page) : null, // Include currentPage only if pagination is applied
       data: rows,
     });
   } catch (error) {
+    // Handle errors and send a response
     return res.status(500).json({
       success: false,
-      code: "INTERNAL_SERVER_ERROR",
+      code: 'INTERNAL_SERVER_ERROR',
       error: error.message,
     });
   }
 };
+
+
 
 // GET DrugConsumeTime by ID
 const GetOneDrugConsumeTime = async (req, res) => {
