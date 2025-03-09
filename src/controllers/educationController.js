@@ -180,9 +180,11 @@ const getOneEducation = async (req, res) => {
 const getAllEducations = async (req, res) => {
   try {
     // Pagination and filter parameters
-    const { page = 1, pageSize = 10 } = req.body;
+    let { page = 1, pageSize = 10, id_user } = req.body;
     const { status = "active", tipe, side_effects_null } = req.body.filter || {};
-
+    if (!id_user) {
+      id_user = req.user.id_user;
+    }
     // Build where clause for education based on status and type
     let EducationWhereClause = { status };
 
@@ -213,6 +215,11 @@ const getAllEducations = async (req, res) => {
           },
         ],
       },
+      {
+        model: EducationReadLog,
+        as: 'readLog',
+        required: false
+      },
     ];
 
     if (side_effects_null) {
@@ -241,6 +248,7 @@ const getAllEducations = async (req, res) => {
           status: education.status,
           createdAt: education.createdAt,
           updatedAt: education.updatedAt,
+          readLog: education.readLog
         };
 
         let sideEffects = [];

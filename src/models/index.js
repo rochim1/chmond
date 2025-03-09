@@ -6,12 +6,18 @@ const DrugSchedule = require('./drugSchModel')
 const DrugConsumeTime = require('./drugConsumeTimeModel')
 
 const ChemoSchedule = require('./chemoSchModel')
-const NotificationSent = require('./notificationSentModel')
+const NotificationSent = require('./notificationSentModel');
+const EducationReadLog = require('./educationReadLogModel');
 
 // Define associations here
 Educations.hasMany(Recomendation, {
   foreignKey: 'id_education',
   as: 'recomendations', // Association alias
+});
+
+Educations.hasMany(EducationReadLog, {
+  foreignKey: 'id_education',
+  as: 'readLog', // Association alias
 });
 
 Recomendation.belongsTo(Educations, {
