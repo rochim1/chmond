@@ -109,6 +109,8 @@ const getOneEducation = async (req, res) => {
       id_education
     } = req.params;
 
+    const id_user = req.user.id_user
+
     let education = await Educations.findOne({
       where: {
         id_education,
@@ -126,7 +128,14 @@ const getOneEducation = async (req, res) => {
           as: "sideEffect",
           required: false,
         }, ],
-      }, ],
+      }, 
+      {
+        model: EducationReadLog,
+        as: 'readLog',
+        where: { id_user },
+        required: false
+      }
+    ],
     });
 
     if (!education) {
@@ -153,6 +162,7 @@ const getOneEducation = async (req, res) => {
       status: education.status,
       createdAt: education.createdAt,
       updatedAt: education.updatedAt,
+      readLog: education.readLog
     };
 
     // Return education data along with side effects
@@ -218,6 +228,7 @@ const getAllEducations = async (req, res) => {
       {
         model: EducationReadLog,
         as: 'readLog',
+        where: { id_user },
         required: false
       },
     ];
