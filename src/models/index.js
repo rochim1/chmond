@@ -25,6 +25,11 @@ Recomendation.belongsTo(Educations, {
   as: 'education', // Ensure consistency
 });
 
+EducationReadLog.belongsTo(Educations, {
+  foreignKey: 'id_education',
+  as: 'education', // Ensure consistency
+});
+
 Recomendation.belongsTo(SideEffects, {
   foreignKey: 'id_side_effect',
   as: 'sideEffect', // Use camelCase for clarity
@@ -72,5 +77,6 @@ module.exports = {
   SideEffects,
   DrugSchedule,
   DrugConsumeTime,
-  NotificationSent
+  NotificationSent,
+  EducationReadLog
 };

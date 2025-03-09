@@ -4,7 +4,8 @@ const {
 const {
   Educations,
   Recomendation,
-  SideEffects
+  SideEffects,
+  EducationReadLog
 } = require("../models");
 const fs = require("fs");
 const path = require("path");
@@ -12,8 +13,6 @@ const {
   Op
 } = require("sequelize");
 const moment = require('moment')
-
-const EducationReadLog = require('../models/educationReadLogModel');
 
 // Create Education
 const createEducation = async (req, res) => {
@@ -557,7 +556,7 @@ const deleteEducation = async (req, res) => {
 };
 
 // to log education read
-const logEducationRead = async (req, res) => {
+const createLogRead = async (req, res) => {
   try {
     let { id_user, id_education } = req.body;
 
@@ -614,16 +613,14 @@ const logEducationRead = async (req, res) => {
   }
 };
 
-const getReadArticlesByUser = async (req, res) => {
+const getOneLogRead = async (req, res) => {
   try {
-    const { id_user } = req.params;
+    let { id_education } = req.params;
 
-    if (!id_user) {
-      id_user = req.user.id_user;
-    }
-
+    let id_user = req.user.id_user;
+    
     const readArticles = await EducationReadLog.findAll({
-      where: { id_user },
+      where: { id_user, id_education },
       include: [
         {
           model: Educations,
@@ -647,14 +644,89 @@ const getReadArticlesByUser = async (req, res) => {
   }
 };
 
+const getAllEducationsReadLog = async (req, res) => {
+  try {
+    // Pagination and filter parameters
+    let { page = 1, pageSize = 10, id_user } = req.body;
+    const { id_education } = req.body.filter || {};
+    if (!id_user) {
+      id_user = req.user.id_user;
+    }
+    // Build where clause for education based on status and type
+    let EducationWhereClause = { };
+    if (id_education) {
+      EducationWhereClause = {
+        ...EducationWhereClause,
+        id_education: id_education
+      };
+    }
+    // Pagination settings
+    const offset = (page - 1) * pageSize;
+    const limit = parseInt(pageSize);
 
+    // Query to get educations
+    const readLogs = await EducationReadLog.findAndCountAll({
+      where: EducationWhereClause,
+      offset,
+      limit,
+      distinct: true, // Ensure distinct count for pagination
+      include: [
+        {
+          model: Educations,
+          as: 'education',
+          required: false
+        }
+      ]
+    });
+
+    // Format the response data
+    if (readLogs && readLogs.rows && readLogs.rows.length) {
+      readLogs.rows = readLogs.rows.map((log) => {
+        const logData = {
+          id_read_log: log.id_read_log,
+          id_user: log.id_user,
+          id_education: log.id_education,
+          read_at: log.read_at,
+          read_count: log.read_count,
+          createdAt: log.createdAt,
+          updatedAt: log.updatedAt,
+          education: log.education
+        };
+
+        // Return the education data along with associated side effects
+        return {
+          ...logData
+        };
+      });
+    }
+
+    // Return the paginated response
+    return res.status(200).json({
+      success: true,
+      totalItems: readLogs.count,
+      totalPages: Math.ceil(readLogs.count / pageSize),
+      currentPage: parseInt(page),
+      data: readLogs.rows,
+    });
+  } catch (error) {
+    // Handle errors
+    return res.status(500).json({
+      success: false,
+      code: "INTERNAL_SERVER_ERROR",
+      error: {
+        message: error.message,
+      },
+    });
+  }
+};
 
 module.exports = {
-  getReadArticlesByUser,
-  logEducationRead,
+  getOneLogRead,
+  createLogRead,
   createEducation,
   getOneEducation,
   getAllEducations,
   updateEducation,
   deleteEducation,
+  getAllEducationsReadLog
 };

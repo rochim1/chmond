@@ -76,8 +76,9 @@ apiRouter.put('/education/update/:id_education', authMiddleware, uploadMiddlewar
 apiRouter.delete('/education/delete/:id_education', authMiddleware, educationController.deleteEducation); // Delete user
 
 // education read
-apiRouter.get('/education/log/:id_education', authMiddleware, educationController.getReadArticlesByUser); // View user
-apiRouter.post('/education/log/create', authMiddleware, educationController.logEducationRead); // Create a new user
+apiRouter.get('/education/log/all', authMiddleware, educationController.getAllEducationsReadLog); // Create a new user
+apiRouter.get('/education/log/:id_education', authMiddleware, educationController.getOneLogRead); // View user
+apiRouter.post('/education/log/create', authMiddleware, educationController.createLogRead); // Create a new user
 
 apiRouter.get('/recomendation', authMiddleware, recomendationController.getRecomendation);
 
