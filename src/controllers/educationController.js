@@ -11,6 +11,9 @@ const path = require("path");
 const {
   Op
 } = require("sequelize");
+const moment = require('moment')
+
+const EducationReadLog = require('../models/educationReadLogModel');
 
 // Create Education
 const createEducation = async (req, res) => {
@@ -534,7 +537,102 @@ const deleteEducation = async (req, res) => {
   }
 };
 
+// to log education read
+const logEducationRead = async (req, res) => {
+  try {
+    let { id_user, id_education } = req.body;
+
+    if (!id_user) {
+      id_user = req.user.id_user;
+    }
+
+    const education = await Educations.findOne({
+      where: { id_education }
+    });
+
+    if (!education) {
+      return res.status(404).json({
+        success: false,
+        code: "NOT_FOUND",
+        error: {
+          message: "Education not found",
+        },
+      });
+    }
+    // Cek apakah user sudah pernah membaca artikel ini sebelumnya
+    const existingLog = await EducationReadLog.findOne({
+      where: { id_user, id_education },
+    });
+
+    let eduLog = {};
+    if (!existingLog) {
+      // Simpan jika belum ada catatan pembacaan
+      eduLog = await EducationReadLog.create({ id_user, id_education, read_at: moment().format() });
+    } else {
+      // Perbarui jumlah baca dan timestamp jika sudah ada
+      eduLog = await existingLog.update({ 
+        read_at: moment().format(), // tanggal terbaru buka
+        read_count: existingLog.read_count + 1
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Artikel "${education.title}" telah dibaca`,
+      data: {
+        id_education,
+        title: education.title,
+        status: education.status,
+        readLog: eduLog
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      code: 'INTERNAL_SERVER_ERROR',
+      error: error.message,
+    });
+  }
+};
+
+const getReadArticlesByUser = async (req, res) => {
+  try {
+    const { id_user } = req.params;
+
+    if (!id_user) {
+      id_user = req.user.id_user;
+    }
+
+    const readArticles = await EducationReadLog.findAll({
+      where: { id_user },
+      include: [
+        {
+          model: Educations,
+          as: 'education',
+          attributes: ['id_education', 'title'],
+        },
+      ],
+      attributes: ['id_education', 'read_at', 'read_count'],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: readArticles,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      code: 'INTERNAL_SERVER_ERROR',
+      error: error.message,
+    });
+  }
+};
+
+
+
 module.exports = {
+  getReadArticlesByUser,
+  logEducationRead,
   createEducation,
   getOneEducation,
   getAllEducations,

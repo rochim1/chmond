@@ -16,7 +16,7 @@ sequelize.authenticate()
     console.log('Database connected...');
     // if (process.env.environment == 'development' || process.env.environment !== 'production') {
       await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
-      const result =  await sequelize.sync({ alter: false, logging: false });  // Or the sync method you're using
+      const result =  await sequelize.sync({ force: false, alter: false, logging: false });  // Or the sync method you're using
       await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
       return result;
       // }
