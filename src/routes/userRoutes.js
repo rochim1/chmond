@@ -11,6 +11,7 @@ const monitoringLabController = require('../controllers/monitoringLabController'
 const drugSchController = require('../controllers/drugSchController');
 const drugConsumeTimeController = require('../controllers/drugConsumeTimeController');
 const notificationController = require('../controllers/notificationController');
+const sessionLogController = require('../controllers/sessionLogController');
 
 // validator
 const userValidator = require('../validations/userValidator');
@@ -81,6 +82,11 @@ apiRouter.get('/education/log/:id_education', authMiddleware, educationControlle
 apiRouter.post('/education/log/create', authMiddleware, educationController.createLogRead); // Create a new user
 
 apiRouter.get('/recomendation', authMiddleware, recomendationController.getRecomendation);
+
+//
+apiRouter.post("/session/start", authMiddleware, sessionLogController.startSession);
+apiRouter.post("/session/end", authMiddleware, sessionLogController.endSession);
+apiRouter.get("/session/total-usage", authMiddleware, sessionLogController.getTotalUsageTime);
 
 // Chemo Schedule Route
 apiRouter.get('/chemo', authMiddleware, chemoSchController.getAllChemoSchedules); // View all user

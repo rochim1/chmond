@@ -647,8 +647,8 @@ const getOneLogRead = async (req, res) => {
 const getAllEducationsReadLog = async (req, res) => {
   try {
     // Pagination and filter parameters
-    let { page = 1, pageSize = 10, id_user } = req.body;
-    const { id_education } = req.body.filter || {};
+    let { page = 1, pageSize = 10 } = req.body;
+    let { id_education, id_user } = req.body.filter || {};
     if (!id_user) {
       id_user = req.user.id_user;
     }

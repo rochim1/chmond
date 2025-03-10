@@ -1,0 +1,166 @@
+const moment = require("moment");
+const SessionLog = require("../models/sessionLogModel");
+const { Op, Sequelize } = require("sequelize");
+/**
+ * Start a new session when user logs in
+ */
+const startSession = async (req, res) => {
+    try {
+        let { id_user } = req.body;
+
+        if (!id_user) {
+            id_user = req.user.id_user;
+        }
+        if (!id_user) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required",
+            });
+        }
+
+        // Buat sesi baru
+        const session = await SessionLog.create({
+            id_user,
+            date: moment().format("YYYY-MM-DD"),
+            start_time: moment().format("YYYY-MM-DD HH:mm:ss"),
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Session started successfully",
+            data: session,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * End a session when user logs out
+ */
+const endSession = async (req, res) => {
+    try {
+        const { id_session } = req.body;
+
+        if (!id_session) {
+            return res.status(400).json({
+                success: false,
+                message: "Session ID is required",
+            });
+        }
+
+        // Cari sesi yang masih aktif
+        const session = await SessionLog.findByPk(id_session);
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                message: "Session not found",
+            });
+        }
+
+        // Waktu sekarang sebagai end_time
+        const endTime = moment();
+        session.end_time = endTime.format("YYYY-MM-DD HH:mm:ss");
+
+        // Hitung durasi dalam detik
+        const startTime = moment(session.start_time);
+        const duration = moment.duration(endTime.diff(startTime)).asSeconds();
+
+        session.duration = duration; // Simpan durasi dalam database
+        await session.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Session ended successfully",
+            data: {
+                id_session: session.id_session,
+                id_user: session.id_user,
+                date: session.date,
+                start_time: session.start_time,
+                end_time: session.end_time,
+                duration_seconds: duration,
+                duration_human_readable: moment.utc(duration * 1000).format("HH:mm:ss"),
+            },
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * Calculate total usage time in a day
+ */
+
+const getTotalUsageTime = async (req, res) => {
+    try {
+        let { page = 1, pageSize = 10, filter = {} } = req.body;
+        let { id_user, date } = filter;
+
+        // Pagination settings
+        const offset = (page - 1) * (parseInt(pageSize) || 10);
+        const limit = parseInt(pageSize) || 10;
+
+        // Buat where clause secara dinamis
+        let SessionWhereClause = {};
+        if (id_user) SessionWhereClause.id_user = id_user;
+        if (date) SessionWhereClause.date = date;
+
+        // Ambil total durasi per tanggal
+        const results = await SessionLog.findAll({
+            attributes: [
+                "date",
+                "id_user",
+                [Sequelize.fn("SUM", Sequelize.col("duration")), "totalSeconds"],
+                [Sequelize.fn("COUNT", Sequelize.col("id_session")), "totalSessions"],
+            ],
+            where: SessionWhereClause,
+            group: ["date", "id_user"],
+            order: [["date", "DESC"]],
+            offset,
+            limit,
+            raw: true
+        });
+
+        // Ambil detail sesi dalam satu query
+        const sessionDetails = await SessionLog.findAll({
+            attributes: ["id_session", "date", "start_time", "end_time", "duration"],
+            where: SessionWhereClause,
+            order: [["date", "DESC"], ["start_time", "ASC"]],
+            raw: true
+        });
+
+        // Gabungkan hasil berdasarkan tanggal
+        const data = results.map(row => ({
+            date: row.date,
+            id_user: row.id_user,
+            totalUsage: new Date(row.totalSeconds * 1000).toISOString().substr(11, 8), // Convert ke HH:mm:ss
+            totalSeconds: row.totalSeconds,
+            totalSessions: row.totalSessions,
+            sessions: sessionDetails.filter(s => s.date === row.date) // Ambil sesi yang sesuai dengan tanggalnya
+        }));
+
+        return res.status(200).json({
+            success: true,
+            data,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message,
+        });
+    }
+};
+
+
+
+
+module.exports = { startSession, endSession, getTotalUsageTime };
