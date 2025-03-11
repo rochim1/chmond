@@ -86,7 +86,8 @@ apiRouter.get('/recomendation', authMiddleware, recomendationController.getRecom
 //
 apiRouter.post("/session/start", authMiddleware, sessionLogController.startSession);
 apiRouter.post("/session/end", authMiddleware, sessionLogController.endSession);
-apiRouter.get("/session/total-usage", authMiddleware, sessionLogController.getTotalUsageTime);
+apiRouter.get("/session/total-usage", authMiddleware, sessionLogController.getAllUsageSession);
+apiRouter.get("/session/total-usage/:id_session", authMiddleware, sessionLogController.getOneUsageSession);
 
 // Chemo Schedule Route
 apiRouter.get('/chemo', authMiddleware, chemoSchController.getAllChemoSchedules); // View all user

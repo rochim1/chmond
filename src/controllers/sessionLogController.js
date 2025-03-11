@@ -99,7 +99,7 @@ const endSession = async (req, res) => {
  * Calculate total usage time in a day
  */
 
-const getTotalUsageTime = async (req, res) => {
+const getAllUsageSession = async (req, res) => {
     try {
         let { page = 1, pageSize = 10, filter = {} } = req.body;
         let { id_user, date } = filter;
@@ -160,7 +160,83 @@ const getTotalUsageTime = async (req, res) => {
     }
 };
 
+const getOneUsageSession = async (req, res) => {
+    try {
+        let { id_user } = req.params;
+        let { date } = req.body;
 
+        if (!id_user) {
+            id_user = req.user.id_user;
+        }
+        // Validasi input
+        if (!id_user) {
+            return res.status(400).json({
+                success: false,
+                message: "id_user is required",
+            });
+        }
 
+        if (!date) {
+            return res.status(400).json({
+                success: false,
+                message: "date is required",
+            });
+        }
 
-module.exports = { startSession, endSession, getTotalUsageTime };
+        // Ambil total durasi dan jumlah sesi untuk id_user tertentu pada tanggal tertentu
+        const result = await SessionLog.findOne({
+            attributes: [
+                "date",
+                "id_user",
+                [Sequelize.fn("SUM", Sequelize.col("duration")), "totalSeconds"],
+                [Sequelize.fn("COUNT", Sequelize.col("id_session")), "totalSessions"],
+            ],
+            where: {
+                [Sequelize.Op.and]: [{ id_user }, { date }],
+            },
+            group: ["date", "id_user"],
+            raw: true,
+        });
+
+        if (!result) {
+            return res.status(404).json({
+                success: false,
+                message: "No session found for the given user and date",
+            });
+        }
+
+        // Ambil detail semua sesi berdasarkan id_user dan tanggal tertentu
+        const sessionDetails = await SessionLog.findAll({
+            attributes: ["id_session", "date", "start_time", "end_time", "duration"],
+            where: {
+                [Sequelize.Op.and]: [{ id_user }, { date }],
+            },
+            order: [["start_time", "ASC"]],
+            raw: true,
+        });
+
+        // Format response
+        const data = {
+            date: result.date,
+            id_user: result.id_user,
+            totalUsage: new Date(result.totalSeconds * 1000).toISOString().substr(11, 8), // Convert ke HH:mm:ss
+            totalSeconds: result.totalSeconds,
+            totalSessions: result.totalSessions,
+            sessions: sessionDetails, // Detail sesi
+        };
+
+        return res.status(200).json({
+            success: true,
+            data,
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message,
+        });
+    }
+};
+
+module.exports = { startSession, endSession, getAllUsageSession, getOneUsageSession };
