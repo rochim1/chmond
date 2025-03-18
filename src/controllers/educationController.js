@@ -170,6 +170,23 @@ const getOneEducation = async (req, res) => {
       side_effects: getSideEffects // Include side effects array
     };
 
+    // Cek apakah user sudah pernah membaca artikel ini sebelumnya
+    const existingLog = await EducationReadLog.findOne({
+      where: { id_user, id_education },
+    });
+
+    let eduLog = {};
+    if (!existingLog) {
+      // Simpan jika belum ada catatan pembacaan
+      eduLog = await EducationReadLog.create({ id_user, id_education, read_at: moment().format() });
+    } else {
+      // Perbarui jumlah baca dan timestamp jika sudah ada
+      eduLog = await existingLog.update({ 
+        read_at: moment().format(), // tanggal terbaru buka
+        read_count: existingLog.read_count + 1
+      });
+    }
+    
     return res.status(200).json({
       success: true,
       data: education,
