@@ -152,24 +152,6 @@ const getOneEducation = async (req, res) => {
       getSideEffects = education.recomendations.map(recomendation => recomendation.sideEffect);
     }
 
-    const educationData = {
-      id_education: education.id_education,
-      title: education.title,
-      content: education.content,
-      video_link: education.video_link,
-      thumbnail: education.thumbnail,
-      status: education.status,
-      createdAt: education.createdAt,
-      updatedAt: education.updatedAt,
-      readLog: education.readLog
-    };
-
-    // Return education data along with side effects
-    education = {
-      ...educationData, // Include all the education fields
-      side_effects: getSideEffects // Include side effects array
-    };
-
     // Cek apakah user sudah pernah membaca artikel ini sebelumnya
     const existingLog = await EducationReadLog.findOne({
       where: { id_user, id_education },
@@ -186,6 +168,24 @@ const getOneEducation = async (req, res) => {
         read_count: existingLog.read_count + 1
       });
     }
+
+    const educationData = {
+      id_education: education.id_education,
+      title: education.title,
+      content: education.content,
+      video_link: education.video_link,
+      thumbnail: education.thumbnail,
+      status: education.status,
+      createdAt: education.createdAt,
+      updatedAt: education.updatedAt,
+      readLog: eduLog
+    };
+
+    // Return education data along with side effects
+    education = {
+      ...educationData, // Include all the education fields
+      side_effects: getSideEffects // Include side effects array
+    };
     
     return res.status(200).json({
       success: true,
