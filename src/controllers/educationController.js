@@ -152,6 +152,23 @@ const getOneEducation = async (req, res) => {
       getSideEffects = education.recomendations.map(recomendation => recomendation.sideEffect);
     }
 
+    // Cek apakah user sudah pernah membaca artikel ini sebelumnya
+    const existingLog = await EducationReadLog.findOne({
+      where: { id_user, id_education },
+    });
+
+    let eduLog = {};
+    if (!existingLog) {
+      // Simpan jika belum ada catatan pembacaan
+      eduLog = await EducationReadLog.create({ id_user, id_education, read_at: moment().format() });
+    } else {
+      // Perbarui jumlah baca dan timestamp jika sudah ada
+      eduLog = await existingLog.update({ 
+        read_at: moment().format(), // tanggal terbaru buka
+        read_count: existingLog.read_count + 1
+      });
+    }
+
     const educationData = {
       id_education: education.id_education,
       title: education.title,
@@ -161,7 +178,7 @@ const getOneEducation = async (req, res) => {
       status: education.status,
       createdAt: education.createdAt,
       updatedAt: education.updatedAt,
-      readLog: education.readLog
+      readLog: eduLog
     };
 
     // Return education data along with side effects
@@ -169,7 +186,7 @@ const getOneEducation = async (req, res) => {
       ...educationData, // Include all the education fields
       side_effects: getSideEffects // Include side effects array
     };
-
+    
     return res.status(200).json({
       success: true,
       data: education,
