@@ -70,6 +70,7 @@ apiRouter.put('/side_effect/update/:id_side_effect', authMiddleware, sideEffectV
 apiRouter.delete('/side_effect/delete/:id_side_effect', authMiddleware, sideEffectController.deleteSideEffect); // Delete user
 
 // Education Route
+apiRouter.get('/education/read-by-user', authMiddleware, educationController.getEducationOnDetailUser); // list education on detail user
 apiRouter.get('/education', authMiddleware, educationController.getAllEducations); // View all user
 apiRouter.get('/education/:id_education', authMiddleware, educationController.getOneEducation); // View user
 apiRouter.post('/education/create', authMiddleware, uploadMiddleware.single('thumbnail'), educationValidatorCreate, educationController.createEducation); // Create a new user
