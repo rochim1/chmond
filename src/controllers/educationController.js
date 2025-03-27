@@ -14,6 +14,83 @@ const {
 } = require("sequelize");
 const moment = require('moment')
 
+// list education on detail user
+const getEducationOnDetailUser = async (req, res) => {
+  try {
+    // Pagination and filter parameters
+    let { page = 1, pageSize = 10, id_user } = req.body;
+    const { status = "active" } = req.body.filter || {};
+    if (!id_user) {
+      id_user = req.user.id_user;
+    }
+    // Build where clause for education based on status and type
+    let EducationWhereClause = { status };
+
+    // Pagination settings
+    const offset = (page - 1) * pageSize;
+    const limit = parseInt(pageSize);
+
+    // Handle filtering educations without recommendations
+    let includeClause = [
+      {
+        model: EducationReadLog,
+        as: 'readLog',
+        where: { id_user },
+        required: true
+      },
+    ];
+
+    // Query to get educations
+    const educations = await Educations.findAndCountAll({
+      where: EducationWhereClause,
+      offset,
+      limit,
+      distinct: true, // Ensure distinct count for pagination
+      include: includeClause,
+    });
+
+    // Format the response data
+    if (educations && educations.rows && educations.rows.length) {
+      educations.rows = educations.rows.map((education) => {
+        const educationData = {
+          id_education: education.id_education,
+          title: education.title,
+          content: education.content,
+          video_link: education.video_link,
+          thumbnail: education.thumbnail,
+          status: education.status,
+          createdAt: education.createdAt,
+          updatedAt: education.updatedAt,
+          readLog: education.readLog
+        };
+
+        // Return the education data along with associated side effects
+        return {
+          ...educationData,
+        };
+      });
+    }
+
+    // Return the paginated response
+    return res.status(200).json({
+      success: true,
+      totalItems: educations.count,
+      totalPages: Math.ceil(educations.count / pageSize),
+      currentPage: parseInt(page),
+      educations: educations.rows,
+    });
+  } catch (error) {
+    // Handle errors
+    return res.status(500).json({
+      success: false,
+      code: "INTERNAL_SERVER_ERROR",
+      error: {
+        message: error.message,
+      },
+    });
+  }
+}
+
 // Create Education
 const createEducation = async (req, res) => {
   try {
@@ -745,5 +822,6 @@ module.exports = {
   getAllEducations,
   updateEducation,
   deleteEducation,
-  getAllEducationsReadLog
+  getAllEducationsReadLog,
+  getEducationOnDetailUser
 };
