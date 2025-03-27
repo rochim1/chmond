@@ -40,14 +40,15 @@ const getEducationOnDetailUser = async (req, res) => {
       },
     ];
 
-    // Query to get educations
-    const educations = await Educations.findAndCountAll({
-      where: EducationWhereClause,
-      offset,
-      limit,
-      distinct: true, // Ensure distinct count for pagination
-      include: includeClause,
-    });
+      // Query to get educations
+      const educations = await Educations.findAndCountAll({
+        where: EducationWhereClause,
+        offset,
+        limit,
+        distinct: true, // Ensure distinct count for pagination
+        include: includeClause,
+        attributes: { exclude: ['content'] }
+      });
 
     // Format the response data
     if (educations && educations.rows && educations.rows.length) {
@@ -55,7 +56,7 @@ const getEducationOnDetailUser = async (req, res) => {
         const educationData = {
           id_education: education.id_education,
           title: education.title,
-          content: education.content,
+          // content: education.content,
           video_link: education.video_link,
           thumbnail: education.thumbnail,
           status: education.status,
@@ -184,6 +185,9 @@ const getOneEducation = async (req, res) => {
     const {
       id_education
     } = req.params;
+    const {
+      read_loging = true
+    } = req.body;
 
     const id_user = req.user.id_user
 
@@ -235,7 +239,7 @@ const getOneEducation = async (req, res) => {
     });
 
     let eduLog = {};
-    if (!existingLog) {
+    if (!existingLog && read_loging) {
       // Simpan jika belum ada catatan pembacaan
       eduLog = await EducationReadLog.create({ id_user, id_education, read_at: moment().format() });
     } else {
