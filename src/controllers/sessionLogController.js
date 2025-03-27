@@ -191,7 +191,7 @@ const getAllUsageSession = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            totalDurationFormatted: totalDuration, // Dari SQL
+            totalDurationFormatted, // Dari SQL
             totalSeconds,
             totalSessions,
             averageDuration,
