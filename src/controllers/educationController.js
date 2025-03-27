@@ -188,7 +188,8 @@ const getOneEducation = async (req, res) => {
     const {
       read_loging = true
     } = req.body;
-
+    console.log(id_education)
+    console.log(read_loging)
     const id_user = req.user.id_user
 
     let education = await Educations.findOne({

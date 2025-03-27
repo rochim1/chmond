@@ -98,28 +98,39 @@ const endSession = async (req, res) => {
 /**
  * Calculate total usage time in a day
  */
-
 const getAllUsageSession = async (req, res) => {
     try {
         let { page = 1, pageSize = 10, filter = {} } = req.body;
         let { id_user, date } = filter;
 
-        // Pagination settings
-        const offset = (page - 1) * (parseInt(pageSize) || 10);
-        const limit = parseInt(pageSize) || 10;
+        if (!id_user) {
+            return res.status(400).json({
+                success: false,
+                message: "id_user perlu disertakan",
+            });
+        }
 
-        // Buat where clause secara dinamis
-        let SessionWhereClause = {};
-        if (id_user) SessionWhereClause.id_user = id_user;
-        if (date) SessionWhereClause.date = date;
+        // Pastikan page dan pageSize adalah angka valid
+        page = parseInt(page) || 1;
+        pageSize = parseInt(pageSize) || 10;
 
-        // Ambil total durasi per tanggal
+        const offset = (page - 1) * pageSize;
+        const limit = pageSize;
+
+        // Filter kondisi
+        let SessionWhereClause = { id_user };
+        if (date) {
+            SessionWhereClause.date = date;
+        }
+
+        // Query utama dengan agregasi
         const results = await SessionLog.findAll({
             attributes: [
                 "date",
                 "id_user",
                 [Sequelize.fn("SUM", Sequelize.col("duration")), "totalSeconds"],
                 [Sequelize.fn("COUNT", Sequelize.col("id_session")), "totalSessions"],
+                [Sequelize.literal("SEC_TO_TIME(SUM(duration))"), "totalUsage"]
             ],
             where: SessionWhereClause,
             group: ["date", "id_user"],
@@ -129,7 +140,7 @@ const getAllUsageSession = async (req, res) => {
             raw: true
         });
 
-        // Ambil detail sesi dalam satu query
+        // Ambil detail sesi sekaligus
         const sessionDetails = await SessionLog.findAll({
             attributes: ["id_session", "date", "start_time", "end_time", "duration"],
             where: SessionWhereClause,
@@ -137,20 +148,57 @@ const getAllUsageSession = async (req, res) => {
             raw: true
         });
 
-        // Gabungkan hasil berdasarkan tanggal
+        // Gabungkan data berdasarkan tanggal
         const data = results.map(row => ({
             date: row.date,
             id_user: row.id_user,
-            totalUsage: new Date(row.totalSeconds * 1000).toISOString().substr(11, 8), // Convert ke HH:mm:ss
+            totalUsage: row.totalUsage, // Sudah dalam format HH:mm:ss dari MySQL
             totalSeconds: row.totalSeconds,
             totalSessions: row.totalSessions,
-            sessions: sessionDetails.filter(s => s.date === row.date) // Ambil sesi yang sesuai dengan tanggalnya
+            sessions: sessionDetails.filter(s => s.date === row.date)
         }));
+
+        // Hitung total durasi dan rata-rata secara keseluruhan
+        // Ambil ringkasan total durasi dan jumlah sesi
+        const usageSummary = await SessionLog.findAll({
+            attributes: [
+                "id_user",
+                [Sequelize.literal("SEC_TO_TIME(SUM(duration))"), "totalDuration"], // Konversi langsung di SQL
+                [Sequelize.fn("SUM", Sequelize.col("duration")), "totalSeconds"],
+                [Sequelize.fn("COUNT", Sequelize.col("id_session")), "totalSessions"],
+            ],
+            where: SessionWhereClause,
+            group: ["id_user"],
+            raw: true
+        });
+
+        // Hitung total durasi dan rata-rata
+        let totalDuration = usageSummary[0]?.totalDuration || "00:00:00";
+        let totalSeconds = usageSummary.reduce((sum, row) => sum + parseInt(row.totalSeconds || 0, 10), 0);
+        let totalSessions = usageSummary.reduce((sum, row) => sum + parseInt(row.totalSessions || 0, 10), 0);
+        let averageDuration = totalSessions > 0 ? Math.floor(totalSeconds / totalSessions) : 0;
+
+        // Konversi rata-rata durasi ke format HH:mm:ss jika ingin tetap menggunakan Moment.js
+        // Konversi total durasi ke format HH:mm:ss atau Xd HH:mm:ss jika lebih dari 24 jam
+        function formatDuration(seconds) {
+            const days = Math.floor(seconds / 86400); // Hitung jumlah hari
+            const timeString = moment.utc(seconds * 1000).format("HH:mm:ss");
+            return days > 0 ? `${days}d ${timeString}` : timeString;
+        }
+
+        let totalDurationFormatted = formatDuration(totalSeconds);
+        let averageDurationFormatted = formatDuration(averageDuration);
 
         return res.status(200).json({
             success: true,
+            totalDurationFormatted: totalDuration, // Dari SQL
+            totalSeconds,
+            totalSessions,
+            averageDuration,
+            averageDurationFormatted,
             data,
         });
+
     } catch (error) {
         return res.status(500).json({
             success: false,
@@ -159,6 +207,7 @@ const getAllUsageSession = async (req, res) => {
         });
     }
 };
+
 
 const getOneUsageSession = async (req, res) => {
     try {
