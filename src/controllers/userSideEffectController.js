@@ -115,7 +115,7 @@ const updateUserSideEffect = async (req, res) => {
     }
 
     await userSideEffect.update({
-      id_side_effect,
+      id_user_side_effect,
       id_user,
       date_feel,
       time_feel,
