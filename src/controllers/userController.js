@@ -23,16 +23,15 @@ const {
 
 const getOneUsers = async (req, res) => {
   try {
-    const {
-      id_user
-    } = req.params;
+    const { id_user } = req.params;
+    const { show_password } = req.body;
 
     if (!id_user) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         code: "BAD_REQUEST",
         error: {
-          message: "can't get id_user",
+          message: "Can't get id_user",
         },
       });
     }
@@ -45,21 +44,39 @@ const getOneUsers = async (req, res) => {
     });
 
     if (!user) {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
         error: {
-          message: "user not found",
+          message: "User not found",
         },
       });
     }
 
+    // Optional: clone user for response
+    const userResponse = { ...user.dataValues };
+    if (show_password) {
+      try {
+        userResponse.password = decrypt(userResponse.password, process.env.SALT);
+      } catch (decryptError) {
+        return res.status(500).json({
+          success: false,
+          code: "DECRYPT_ERROR",
+          error: {
+            message: "Failed to decrypt password",
+          },
+        });
+      }
+    } else {
+      delete userResponse.password; // Optional: hide password if not requested
+    }
+
     return res.status(200).json({
       success: true,
-      data: user,
+      data: userResponse,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
       error: {
@@ -68,6 +85,7 @@ const getOneUsers = async (req, res) => {
     });
   }
 };
+
 
 const getAllUsers = async (req, res) => {
   try {
@@ -176,6 +194,7 @@ const login = async (req, res) => {
 
     // Check password
     let isMatch = false;
+    
     if (password == decrypt(user.password, process.env.SALT)) {
       isMatch = true;
     }
@@ -354,6 +373,7 @@ const {
 const client = new OAuth2Client(process.env.oauth_client_id, process.env.oauth_client_secret, process.env.oauth_redirect_uris);
 
 const libphonenumber = require('google-libphonenumber');
+const { Console } = require("console");
 const phoneUtil = libphonenumber.PhoneNumberUtil.getInstance();
 const authorizeUrl = client.generateAuthUrl({
   access_type: 'offline',
@@ -870,7 +890,7 @@ function encrypt(text, salt) {
 }
 
 // Decryption function with string salt as the key
-function decrypt(encryptedText, salt) {
+function  decrypt(encryptedText, salt) {
   const algorithm = "aes-256-cbc";
   const key = crypto.createHash("sha256").update(salt).digest(); // Derive key from salt
   const iv = Buffer.alloc(16, 0); // Use the same fixed IV as in encryption

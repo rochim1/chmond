@@ -18,8 +18,8 @@ const moment = require('moment')
 const getEducationOnDetailUser = async (req, res) => {
   try {
     // Pagination and filter parameters
-    let { page = 1, pageSize = 10, id_user } = req.body;
-    const { status = "active" } = req.body.filter || {};
+    let { page = 1, pageSize = 10 } = req.body;
+    let { status = "active", id_user } = req.body.filter || {};
     if (!id_user) {
       id_user = req.user.id_user;
     }
