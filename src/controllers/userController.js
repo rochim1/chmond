@@ -712,7 +712,13 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    if (req.user && !req.user.email_verified_at) {
+    const user = await User.findOne({
+      where: {
+        email: email,
+      },
+    });
+
+    if (user && !user.email_verified_at) {
       return res.status(403).json({
         success: false,
         code: "FORBIDDEN",
