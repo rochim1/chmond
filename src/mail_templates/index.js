@@ -164,7 +164,7 @@ async function sendEmailForgotPassword(getMailOptions, email, params, lang) {
     const template = handlebars.compile(htmlSource);
 
     // Replace placeholders with actual data
-    const resetLink = `http://${process.env.HOST}/update_password/${token}`;
+    const resetLink = `${process.env.HOST}/update_password/${token}`;
     const replacements = {
         ...params,
         resetLink,
