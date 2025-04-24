@@ -406,27 +406,22 @@ const generateRandomPassword = () => {
 
 const verifyWithGoogle = async (req, res) => {
   try {
+    const { id_token } = req.body;
 
-    let {
-      id_token
-    } = req.body;
-
-    // Verifikasi ID token untuk mendapatk  an informasi pengguna
     const ticket = await client.verifyIdToken({
       idToken: id_token,
       audience: process.env.oauth_client_id
     });
 
     const payload = ticket.getPayload();
-    // Anda dapat mengakses informasi pengguna di payload
     const userInfo = {
       email: payload.email,
       name: payload.name,
       picture: payload.picture,
       email_verified: payload.email_verified,
       locale: payload.locale,
-      sub: payload.sub, // Unique user ID from Google
-      birthdate: payload.birthdate || null, // Retrieve birthdate if available
+      sub: payload.sub,
+      birthdate: payload.birthdate || null,
     };
 
     let formattedPhone;
@@ -434,44 +429,48 @@ const verifyWithGoogle = async (req, res) => {
       formattedPhone = formatPhoneNumberToLocal(payload.phone_number, payload.locale);
     }
 
-    let user = await User.findOne({
+    // First, find user regardless of status
+    let existingUser = await User.findOne({
       where: {
-        status: "active",
-        [Op.or]: [{
-          email: payload.email
-        }, formattedPhone ? {
-          phone: formattedPhone
-        } : null].filter(Boolean),
+        [Op.or]: [
+          { email: payload.email },
+          formattedPhone ? { phone: formattedPhone } : null
+        ].filter(Boolean),
       },
     });
 
-    if (!user) {
+    if (existingUser) {
+      if (existingUser.status !== 'active') {
+        return res.status(403).json({
+          success: false,
+          message: "Akun Anda sudah terdaftar tetapi tidak aktif. Silakan hubungi dukungan (support).",
+        });
+      }
+      // If user is active, continue
+    } else {
+      // Create a new user
       const randomPassword = generateRandomPassword();
       const hashPassword = encrypt(randomPassword, process.env.SALT);
 
-      user = await User.create({
+      existingUser = await User.create({
         email: userInfo.email,
         password: hashPassword,
         name: userInfo.name,
         birthdate: userInfo.birthdate,
       });
 
-      // sending registeration message
-      if (user.email) {
-        const emailResponse = sendEmailFunction(
+      if (existingUser.email) {
+        sendEmailFunction(
           userInfo.email,
-          "register_oauth", {
-            password: randomPassword
-          }, // params are dynamically added inside the function
-          "ind" // or 'eng' for English template
+          "register_oauth",
+          { password: randomPassword },
+          "ind"
         );
       }
     }
 
-    const token = jwt.sign({
-        id: user.id_user,
-        email: user.email,
-      },
+    const token = jwt.sign(
+      { id: existingUser.id_user, email: existingUser.email },
       process.env.JWT_SECRET
     );
 
@@ -480,30 +479,21 @@ const verifyWithGoogle = async (req, res) => {
       message: "Login successful",
       infinite_token: true,
       token,
-      data: user,
+      data: existingUser,
     });
 
   } catch (error) {
-    console.log(error)
-    if (error.name === "SequelizeUniqueConstraintError") {
-      res.status(500).json({
-        success: false,
-        message: "INTERNAL_SERVER_ERROR",
-        error: {
-          message: error.errors[0].message,
-        },
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "INTERNAL_SERVER_ERROR",
-        error: {
-          message: error.message,
-        },
-      });
-    }
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "INTERNAL_SERVER_ERROR",
+      error: {
+        message: error.message,
+      },
+    });
   }
 };
+
 
 const createUserByGoogle = async (req, res) => {
   try {
@@ -719,6 +709,17 @@ const forgotPassword = async (req, res) => {
     });
 
     if (user && !user.email_verified_at) {
+
+      // mengirimkan email verifikasi ke user, minus: tidak ada batasan - bisa nge spam
+      if (email) {
+        // Call sendEmailFunction, make run in background
+        const emailResponse = sendEmailFunction(
+          email,
+          "verify_email", {}, // params are dynamically added inside the function
+          "ind" // or 'eng' for English template
+        );
+      }
+
       return res.status(403).json({
         success: false,
         code: "FORBIDDEN",
