@@ -90,44 +90,57 @@ const getOneUsers = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const {
-      page = 1, pageSize = 10
+      page = 1,
+      pageSize = 10,
+      filter = {},
     } = req.body;
-    const {
-      status
-    } =
-    req.body && req.body.filter ?
-      req.body.filter : {
-        status: "active",
-      };
 
-    const offset = (page - 1) * pageSize;
+    const status = filter.status || "active";
     const limit = parseInt(pageSize);
+    const offset = (parseInt(page) - 1) * limit;
 
     const users = await User.findAndCountAll({
-      where: {
-        status,
-      },
+      where: { status },
       offset,
       limit,
     });
 
+    const resultRows = users.rows?.map(user => {
+      const plainData = user.get({ plain: true });
+      
+      let decryptedPassword = null;
+      if (typeof plainData.password === "string" && plainData.password.length > 0) {
+        try {
+          decryptedPassword = decrypt(plainData.password, process.env.SALT);
+        } catch (err) {
+          console.error("Decryption failed for user ID:", plainData.id, err.message);
+          decryptedPassword = null; // or keep as-is
+        }
+      }
+
+      return {
+        ...plainData,
+        password: decryptedPassword,
+      };
+    }) || [];
+
     res.status(200).json({
       success: true,
       totalItems: users.count,
-      totalPages: Math.ceil(users.count / pageSize),
+      totalPages: Math.ceil(users.count / limit),
       currentPage: parseInt(page),
-      users: users.rows,
+      users: resultRows,
     });
   } catch (error) {
+    console.error("Fatal error in getAllUsers:", error);
     res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
-      error: {
-        message: error.message,
-      },
+      error: { message: error.message },
     });
   }
 };
+
 
 const login = async (req, res) => {
   try {

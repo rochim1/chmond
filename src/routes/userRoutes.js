@@ -44,7 +44,7 @@ apiRouter.get('/verify_google', userController.verifyWithGoogle);
 
 api.get('/reset/:token', userController.verifyEmail);
 // api.get('/verify_email/:token', userController.verifyProcess);
-apiRouter.post('/auth/lupaPassword', authMiddleware, userController.forgotPassword);
+apiRouter.post('/auth/lupaPassword', userController.forgotPassword);
 apiRouter.post('/auth/verifyEmail/:token', userController.verifyEmail);
 
 apiRouter.post('/users/log_access', authMiddleware, userController.logUserAccess); // Create a new user
