@@ -1,8 +1,7 @@
 const UsersService = require("../services/userService");
 const User = require("../models/userModel"); // Adjust the path to your models if needed
 const UserLogAccessModel = require("../models/userLogAccessModel"); // Adjust the path to your models if needed
-const bcrypt = require("bcryptjs"); // For hashing passwords
-const crypto = require("crypto");
+const { decrypt, encrypt, isEncrypted } = require('../utils/userUtilities')
 const nodemailer = require("nodemailer");
 const {
   sendEmailFunction
@@ -24,7 +23,6 @@ const {
 const getOneUsers = async (req, res) => {
   try {
     const { id_user } = req.params;
-    const { show_password } = req.body;
 
     if (!id_user) {
       return res.status(400).json({
@@ -53,27 +51,9 @@ const getOneUsers = async (req, res) => {
       });
     }
 
-    // Optional: clone user for response
-    const userResponse = { ...user.dataValues };
-    if (show_password) {
-      try {
-        userResponse.password = decrypt(userResponse.password, process.env.SALT);
-      } catch (decryptError) {
-        return res.status(500).json({
-          success: false,
-          code: "DECRYPT_ERROR",
-          error: {
-            message: "Failed to decrypt password",
-          },
-        });
-      }
-    } else {
-      delete userResponse.password; // Optional: hide password if not requested
-    }
-
     return res.status(200).json({
       success: true,
-      data: userResponse,
+      data: user.dataValues,
     });
   } catch (error) {
     return res.status(500).json({
@@ -86,57 +66,44 @@ const getOneUsers = async (req, res) => {
   }
 };
 
-
 const getAllUsers = async (req, res) => {
   try {
     const {
-      page = 1,
-      pageSize = 10,
-      filter = {},
+      page = 1, pageSize = 10
     } = req.body;
+    const {
+      status
+    } =
+    req.body && req.body.filter ?
+      req.body.filter : {
+        status: "active",
+      };
 
-    const status = filter.status || "active";
+    const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
-    const offset = (parseInt(page) - 1) * limit;
 
     const users = await User.findAndCountAll({
-      where: { status },
+      where: {
+        status,
+      },
       offset,
       limit,
     });
-
-    const resultRows = users.rows?.map(user => {
-      const plainData = user.get({ plain: true });
-      
-      let decryptedPassword = null;
-      if (typeof plainData.password === "string" && plainData.password.length > 0) {
-        try {
-          decryptedPassword = decrypt(plainData.password, process.env.SALT);
-        } catch (err) {
-          console.error("Decryption failed for user ID:", plainData.id, err.message);
-          decryptedPassword = null; // or keep as-is
-        }
-      }
-
-      return {
-        ...plainData,
-        password: decryptedPassword,
-      };
-    }) || [];
-
+    
     res.status(200).json({
       success: true,
       totalItems: users.count,
-      totalPages: Math.ceil(users.count / limit),
+      totalPages: Math.ceil(users.count / pageSize),
       currentPage: parseInt(page),
-      users: resultRows,
+      users: users.rows,
     });
   } catch (error) {
-    console.error("Fatal error in getAllUsers:", error);
     res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
-      error: { message: error.message },
+      error: {
+        message: error.message,
+      },
     });
   }
 };
@@ -208,7 +175,7 @@ const login = async (req, res) => {
     // Check password
     let isMatch = false;
     
-    if (password == decrypt(user.password, process.env.SALT)) {
+    if (password == isEncrypted(user.password) ? decrypt(user.password, process.env.SALT) : user.password) {
       isMatch = true;
     }
     if (!isMatch) {
@@ -760,7 +727,8 @@ const forgotPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset email sent successfully",
+      message: ''
+      // message: "Password reset email sent successfully",
     });
   } catch (error) {
     console.error("Error sending forgot password email:", error);
@@ -896,32 +864,6 @@ const verifyProcess = async (req, res) => {
   }
 };
 
-// Encryption function using salt as the key
-function encrypt(text, salt) {
-  const algorithm = "aes-256-cbc";
-  const key = crypto.createHash("sha256").update(salt).digest(); // Derive key from salt
-  const iv = Buffer.alloc(16, 0); // Use a fixed IV (not secure, but simple for this use case)
-
-  const cipher = crypto.createCipheriv(algorithm, key, iv);
-  let encrypted = cipher.update(text, "utf8", "hex");
-  encrypted += cipher.final("hex");
-
-  return encrypted;
-}
-
-// Decryption function with string salt as the key
-function  decrypt(encryptedText, salt) {
-  const algorithm = "aes-256-cbc";
-  const key = crypto.createHash("sha256").update(salt).digest(); // Derive key from salt
-  const iv = Buffer.alloc(16, 0); // Use the same fixed IV as in encryption
-
-  const decipher = crypto.createDecipheriv(algorithm, key, iv);
-  let decrypted = decipher.update(encryptedText, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-
-  return decrypted;
-}
-
 module.exports = {
   logUserAccess,
   getAllUsers,
@@ -934,6 +876,5 @@ module.exports = {
   forgotPassword,
   verifyEmail,
   verifyProcess,
-  encrypt,
   verifyWithGoogle
 };

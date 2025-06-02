@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const { decrypt } = require('../utils/userUtilities'); // pastikan decrypt ini di-import ya
 
 const Users = sequelize.define('users', {
   id_user: {
@@ -10,9 +11,9 @@ const Users = sequelize.define('users', {
   email: {
     type: DataTypes.STRING(100),
     allowNull: false,
-    unique: true, // This ensures the email must be unique
+    unique: true,
     validate: {
-      isEmail: true // Optional: Validates that the input is in email format
+      isEmail: true
     }
   },
   password: {
@@ -95,10 +96,32 @@ const Users = sequelize.define('users', {
     type: DataTypes.DATE,
     allowNull: true,
   }
-},
-{
+}, {
   timestamps: true,
-  // tableName: 'users'
+  paranoid: true, // ini kalau kamu mau support soft delete (deletedAt otomatis dipakai)
+  tableName: 'users'
+});
+
+// ✅ FIX: pasang hook ke "Users" (bukan User)
+Users.addHook('afterFind', (findResult) => {
+  if (!findResult) return;
+  console.log('masuk')
+  const decryptPassword = (user) => {
+    if (user.password && typeof user.password === "string") {
+      try {
+        user.password = decrypt(user.password, process.env.SALT);
+      } catch (err) {
+        console.error("Failed to decrypt password for user ID:", user.id_user, err.message);
+        user.password = null;
+      }
+    }
+  };
+
+  if (Array.isArray(findResult)) {
+    findResult.forEach(user => decryptPassword(user));
+  } else {
+    decryptPassword(findResult);
+  }
 });
 
 module.exports = Users;
