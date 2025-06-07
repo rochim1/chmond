@@ -10,12 +10,12 @@ const Users = require('../models/userModel');
 const listCronJobs = [
   {
     trigger_name: "consume_drug_notif",
-    trigger_date: "0 0 23 31 12 *", // At 23:00 31 December every year
+    trigger_date: "0 0 23 31 12 *",
     func: ["triggerConsumeDrugNotif"]
   },
   {
     trigger_name: "update_chemo_terapy_notif",
-    trigger_date: "0 0 0 * * *", // Every midnight
+    trigger_date: "0 0 0 * * *",
     func: ["triggerChemoTerapyNotif"]
   }
 ];
@@ -23,34 +23,41 @@ const listCronJobs = [
 let chemo_jobs = {};
 let drug_jobs = {};
 
-// Initialize all cron jobs
 const initializeCronJobs = () => {
-  initializeImmediatelyNotifSchedule();
-  initializeImmediatelyNotifScheduleDrug();
-  initializeMidnightJob();
-  console.log('Cron jobs initialized');
+  try {
+    initializeImmediatelyNotifSchedule();
+    initializeImmediatelyNotifScheduleDrug();
+    initializeMidnightJob();
+    console.log('✅ Cron jobs initialized');
+  } catch (err) {
+    console.error('❌ Error initializing cron jobs:', err);
+  }
 };
 
 const initializeMidnightJob = () => {
-  const cronInfo = listCronJobs.find(data => data.trigger_name === "update_chemo_terapy_notif");
-  const trigger_date = cronInfo.trigger_date;
+  try {
+    const cronInfo = listCronJobs.find(data => data.trigger_name === "update_chemo_terapy_notif");
+    if (!cronInfo || !cronInfo.trigger_date) throw new Error("Midnight job trigger config missing");
+    
+    cron.schedule(cronInfo.trigger_date, () => {
+      console.log('🕛 Running midnight job to refresh schedules');
+      initializeImmediatelyNotifSchedule();
+      initializeImmediatelyNotifScheduleDrug();
+    });
 
-  cron.schedule(trigger_date, () => {
-    console.log('Running midnight job to refresh chemo schedules');
-    initializeImmediatelyNotifSchedule();
-    initializeImmediatelyNotifScheduleDrug();
-  });
-
-  console.log('Midnight cron job scheduled.');
+    console.log('🕛 Midnight cron job scheduled.');
+  } catch (err) {
+    console.error('❌ Error initializing midnight cron job:', err);
+  }
 };
 
 const initializeImmediatelyNotifSchedule = () => {
   try {
     stopAllJobs('chemotherapy');
     triggerChemoTerapyNotif();
-    console.log("Chemotherapy notification jobs reinitialized.");
+    console.log("🔁 Chemotherapy notification jobs reinitialized.");
   } catch (error) {
-    console.error('Failed to initialize chemotherapy cron jobs:', error);
+    console.error('❌ Failed to initialize chemotherapy cron jobs:', error);
   }
 };
 
@@ -58,9 +65,9 @@ const initializeImmediatelyNotifScheduleDrug = () => {
   try {
     stopAllJobs('drug_consume_time');
     triggerDrugNotif();
-    console.log("Drug consume time notification jobs reinitialized.");
+    console.log("🔁 Drug consume time notification jobs reinitialized.");
   } catch (error) {
-    console.error('Failed to initialize drug consume time cron jobs:', error);
+    console.error('❌ Failed to initialize drug consume time cron jobs:', error);
   }
 };
 
@@ -78,20 +85,20 @@ const triggerChemoTerapyNotif = async () => {
         where: { status: 'active', is_sent: false }
       });
 
-      if (schedules.length === 0) {
-        hasMoreData = false;
-        break;
-      }
+      if (!schedules || schedules.length === 0) break;
 
       for (const schedule of schedules) {
-        // Calculate notification time, subtracting remember_before_minutes
+        if (!schedule.tanggal_kemoterapi || !schedule.waktu_kemoterapi) continue;
+
         let notifTime = momentz.tz(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm', 'Asia/Jakarta');
+        if (!notifTime.isValid()) continue;
+
         if (schedule.remember_before_minutes) {
           notifTime = notifTime.subtract(schedule.remember_before_minutes, 'minutes');
         }
+
         notifTime = notifTime.startOf('minute');
 
-        // Schedule only if notification time is now or future
         if (notifTime.isSameOrAfter(momentz().tz('Asia/Jakarta').startOf('minute'))) {
           await scheduleNotification(schedule, 'chemotherapy');
         }
@@ -99,7 +106,7 @@ const triggerChemoTerapyNotif = async () => {
       offset += chunkSize;
     }
   } catch (error) {
-    console.error('Error triggering chemotherapy notifications:', error);
+    console.error('❌ Error triggering chemotherapy notifications:', error);
   }
 };
 
@@ -117,13 +124,15 @@ const triggerDrugNotif = async () => {
         where: { status: 'active', is_sent: false }
       });
 
-      if (schedules.length === 0) {
-        hasMoreData = false;
-        break;
-      }
+      if (!schedules || schedules.length === 0) break;
 
       for (const schedule of schedules) {
-        let notifTime = momentz.tz(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm', 'Asia/Jakarta').startOf('minute');
+        if (!schedule.date || !schedule.time) continue;
+
+        let notifTime = momentz.tz(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm', 'Asia/Jakarta');
+        if (!notifTime.isValid()) continue;
+
+        notifTime = notifTime.startOf('minute');
 
         if (notifTime.isSameOrAfter(momentz().tz('Asia/Jakarta').startOf('minute'))) {
           await scheduleNotification(schedule, 'drug_consume_time');
@@ -132,34 +141,45 @@ const triggerDrugNotif = async () => {
       offset += chunkSize;
     }
   } catch (error) {
-    console.error('Error triggering drug consume notifications:', error);
+    console.error('❌ Error triggering drug consume notifications:', error);
   }
 };
 
 const scheduleNotification = async (schedule, tipe) => {
   try {
-    let job;
     let scheduleDateTime;
 
     if (tipe === 'chemotherapy') {
+      if (!schedule.tanggal_kemoterapi || !schedule.waktu_kemoterapi) return;
+
       scheduleDateTime = momentz.tz(`${schedule.tanggal_kemoterapi} ${schedule.waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm', 'Asia/Jakarta');
+      if (!scheduleDateTime.isValid()) return;
 
       if (schedule.remember_before_minutes) {
         scheduleDateTime = scheduleDateTime.subtract(schedule.remember_before_minutes, 'minutes');
       }
+      console.log('✅ Cron jobs for chemotherapy time initialized');
     } else if (tipe === 'drug_consume_time') {
+      if (!schedule.date || !schedule.time) return;
+
       scheduleDateTime = momentz.tz(`${schedule.date} ${schedule.time}`, 'YYYY-MM-DD HH:mm', 'Asia/Jakarta');
+      if (!scheduleDateTime.isValid()) return;
+      console.log('✅ Cron jobs for drug consume time initialized');
     } else {
-      console.warn('Unknown notification type:', tipe);
+      console.warn('⚠️ Unknown notification type:', tipe);
       return;
     }
 
-    // Format to cron syntax: second, minute, hour, day of month, month, day of week
-    // node-cron expects 6 fields: second, minute, hour, day, month, dayOfWeek
+    const now = momentz().tz('Asia/Jakarta');
+    if (scheduleDateTime.isBefore(now)) {
+      console.warn('⏱️ Skipping past schedule for:', tipe);
+      return;
+    }
+
     const cronTime = scheduleDateTime.format('s m H D M *');
-    
-    job = cron.schedule(cronTime, async () => {
-      console.log(`Executing cron job for ${tipe} notification at ${cronTime}`);
+
+    const job = cron.schedule(cronTime, async () => {
+      console.log(`🔔 Executing ${tipe} notification at ${cronTime}`);
       await sendNotification(schedule, tipe);
     });
 
@@ -172,49 +192,53 @@ const scheduleNotification = async (schedule, tipe) => {
     return job;
 
   } catch (error) {
-    console.error(`Error scheduling notification for ${tipe}:`, error);
+    console.error(`❌ Error scheduling notification for ${tipe}:`, error);
   }
 };
 
 const stopScheduledJob = (scheduleIdOrObj, tipe) => {
-  let scheduleId;
-  if (typeof scheduleIdOrObj === 'object') {
-    scheduleId = tipe === 'chemotherapy' ? scheduleIdOrObj.id_chemoSchedule : scheduleIdOrObj.id_drug_consume_time;
-  } else {
-    scheduleId = scheduleIdOrObj;
-  }
+  try {
+    let scheduleId = typeof scheduleIdOrObj === 'object'
+      ? tipe === 'chemotherapy' ? scheduleIdOrObj.id_chemoSchedule : scheduleIdOrObj.id_drug_consume_time
+      : scheduleIdOrObj;
 
-  if (tipe === 'chemotherapy' && chemo_jobs[scheduleId]) {
-    chemo_jobs[scheduleId].stop();
-    delete chemo_jobs[scheduleId];
-    console.log(`Stopped chemotherapy job with id ${scheduleId}`);
-  } else if (tipe === 'drug_consume_time' && drug_jobs[scheduleId]) {
-    drug_jobs[scheduleId].stop();
-    delete drug_jobs[scheduleId];
-    console.log(`Stopped drug consume time job with id ${scheduleId}`);
+    if (tipe === 'chemotherapy' && chemo_jobs[scheduleId]) {
+      chemo_jobs[scheduleId].stop();
+      delete chemo_jobs[scheduleId];
+      console.log(`🛑 Stopped chemotherapy job ${scheduleId}`);
+    } else if (tipe === 'drug_consume_time' && drug_jobs[scheduleId]) {
+      drug_jobs[scheduleId].stop();
+      delete drug_jobs[scheduleId];
+      console.log(`🛑 Stopped drug consume job ${scheduleId}`);
+    }
+  } catch (err) {
+    console.error('❌ Error stopping scheduled job:', err);
   }
 };
 
 const stopAllJobs = (tipe) => {
-  if (tipe === 'chemotherapy') {
-    Object.keys(chemo_jobs).forEach(scheduleId => {
-      chemo_jobs[scheduleId].stop();
-      console.log(`Stopped chemotherapy job ${scheduleId}`);
-      delete chemo_jobs[scheduleId];
+  try {
+    const jobs = tipe === 'chemotherapy' ? chemo_jobs : drug_jobs;
+
+    Object.keys(jobs).forEach(scheduleId => {
+      jobs[scheduleId].stop();
+      console.log(`🛑 Stopped ${tipe} job ${scheduleId}`);
+      delete jobs[scheduleId];
     });
-  } else if (tipe === 'drug_consume_time') {
-    Object.keys(drug_jobs).forEach(scheduleId => {
-      drug_jobs[scheduleId].stop();
-      console.log(`Stopped drug consume job ${scheduleId}`);
-      delete drug_jobs[scheduleId];
-    });
+
+    console.log(`✅ All ${tipe} jobs stopped.`);
+  } catch (err) {
+    console.error('❌ Error stopping all jobs:', err);
   }
-  console.log(`All ${tipe} jobs stopped.`);
 };
 
 const updateNotificationSchedule = async (schedule, tipe = 'chemotherapy') => {
-  stopScheduledJob(schedule, tipe);
-  await scheduleNotification(schedule, tipe);
+  try {
+    stopScheduledJob(schedule, tipe);
+    await scheduleNotification(schedule, tipe);
+  } catch (error) {
+    console.error('❌ Failed to update schedule:', error);
+  }
 };
 
 const sendNotification = async (schedule, tipe) => {
@@ -227,109 +251,42 @@ const sendNotification = async (schedule, tipe) => {
     });
 
     if (!user || !user.fcm_token) {
-      console.log('No user or FCM token found for user id:', schedule.id_user);
+      console.warn(`⚠️ No user or FCM token for user ${schedule.id_user}`);
       return;
     }
 
-    let attribute;
+    let attribute = {
+      fcm_token: user.fcm_token,
+      title: '',
+      body: '',
+      receiver: schedule.id_user,
+      sender: 'system',
+      tipe,
+      attribute: { link: '/notification' }
+    };
+
     if (tipe === 'chemotherapy') {
-      attribute = {
-        fcm_token: user.fcm_token,
-        title: '⏰ Pengingat Jadwal Kunjungan',
-        body: `Sesi ${schedule.tujuan_kemoterapi || ''} Anda akan dimulai dalam ${schedule.remember_before_minutes || 0} menit. Siapkan diri Anda dengan baik.`,
-        receiver: schedule.id_user,
-        sender: 'system',
-        tipe,
-        attribute: {
-          link: '/notification'
-        }
-      };
+      attribute.title = '⏰ Pengingat Jadwal Kunjungan';
+      attribute.body = `Sesi ${schedule.tujuan_kemoterapi || ''} Anda akan dimulai dalam ${schedule.remember_before_minutes || 0} menit.`;
 
-      await NotificationSent.create({
-        ...attribute,
-        id_chemoSchedule: schedule.id_chemoSchedule || null
-      });
-
-      await ChemoSchedule.update({ is_sent: true }, {
-        where: { id_chemoSchedule: schedule.id_chemoSchedule }
-      });
-
-      stopScheduledJob(schedule, tipe);
-      notificationController.pushNotification(attribute);
+      await NotificationSent.create({ ...attribute, id_chemoSchedule: schedule.id_chemoSchedule });
+      await ChemoSchedule.update({ is_sent: true }, { where: { id_chemoSchedule: schedule.id_chemoSchedule } });
 
     } else if (tipe === 'drug_consume_time') {
-      attribute = {
-        fcm_token: user.fcm_token,
-        title: '⏰ Pengingat Jadwal Minum Obat',
-        body: `Saatnya minum obat ${schedule.name || ''}! Jangan lupa untuk menjaga kesehatan dengan mengikuti jadwal obat Anda.`,
-        receiver: schedule.id_user,
-        sender: 'system',
-        tipe,
-        attribute: {
-          link: '/notification'
-        }
-      };
+      attribute.title = '⏰ Pengingat Jadwal Minum Obat';
+      attribute.body = `Saatnya minum obat ${schedule.name || ''}!`;
 
-      await NotificationSent.create({
-        ...attribute,
-        id_drug_consume_time: schedule.id_drug_consume_time || null
-      });
-
-      await DrugConsumeTime.update({ is_sent: true }, {
-        where: { id_drug_consume_time: schedule.id_drug_consume_time }
-      });
-
-      stopScheduledJob(schedule, tipe);
-      notificationController.pushNotification(attribute);
+      await NotificationSent.create({ ...attribute, id_drug_consume_time: schedule.id_drug_consume_time });
+      await DrugConsumeTime.update({ is_sent: true }, { where: { id_drug_consume_time: schedule.id_drug_consume_time } });
     }
 
-    console.log(`Notification sent for ${tipe} to user id ${schedule.id_user}`);
+    stopScheduledJob(schedule, tipe);
+    notificationController.pushNotification(attribute);
+    console.log(`✅ Notification sent for ${tipe} to user ${schedule.id_user}`);
 
   } catch (error) {
-    console.error('Failed to send notification:', error);
+    console.error('❌ Failed to send notification:', error);
   }
-};
-
-// unused 
-const getHoursAndMinutes = (timesArray) => {
-    return timesArray.map(time => {
-        const [hour, minute] = time.split(":");
-        return {
-            hour: parseInt(hour),
-            minute: parseInt(minute)
-        }; // Convert to integer for numerical comparison
-    });
-};
-
-// Function to convert cron time to WIB
-const convertToWIB = (cronExpression) => {
-    // Split the cron expression into its components
-    const cronParts = cronExpression.split(' ');
-
-    // Check if it includes seconds and set the variables accordingly
-    let second, minute, hour, day, month, dayOfWeek;
-
-    if (cronParts.length === 6) {
-        // Includes seconds
-        [second, minute, hour, day, month, dayOfWeek] = cronParts;
-    } else if (cronParts.length === 5) {
-        // Does not include seconds
-        [minute, hour, day, month, dayOfWeek] = cronParts;
-        second = 0; // Default to 0 if not specified
-    } else {
-        throw new Error('Invalid cron expression');
-    }
-
-    // Create a moment object in server time (assuming CDT here as an example)
-    const serverTime = moment.tz({ second, minute, hour, day, month: month - 1 }, 'America/Chicago');
-
-    // Convert to WIB (Asia/Jakarta)
-    const wibTime = serverTime.clone().tz('Asia/Jakarta');
-
-    // Reformat the cron expression using WIB values
-    const newCronExpression = `${wibTime.second()} ${wibTime.minute()} ${wibTime.hour()} ${wibTime.date()} ${wibTime.month() + 1} ${dayOfWeek ? dayOfWeek : '*'}`;
-
-    return newCronExpression;
 };
 
 module.exports = {
@@ -341,4 +298,5 @@ module.exports = {
   updateNotificationSchedule,
   stopScheduledJob,
   stopAllJobs,
+  scheduleNotification
 };

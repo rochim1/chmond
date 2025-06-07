@@ -105,7 +105,6 @@ const Users = sequelize.define('users', {
 // ✅ FIX: pasang hook ke "Users" (bukan User)
 Users.addHook('afterFind', (findResult) => {
   if (!findResult) return;
-  console.log('masuk')
   const decryptPassword = (user) => {
     if (user.password && typeof user.password === "string") {
       try {

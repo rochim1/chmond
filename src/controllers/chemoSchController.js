@@ -1,26 +1,21 @@
-const {
-  validationResult
-} = require("express-validator");
+const { validationResult } = require("express-validator");
 const ChemoSchedule = require("../models/chemoSchModel");
 const cronController = require("./cronController");
 const moment = require('moment');
 const momentz = require('moment-timezone');
 
+// Create Chemo Schedule
 const createChemoSchedule = async (req, res) => {
   try {
-    // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
         code: "BAD_REQUEST",
-        error: {
-          message: errors.array(),
-        },
+        error: errors.array(),
       });
     }
 
-    // Extract data from request body
     let {
       tujuan_kemoterapi,
       tanggal_kemoterapi,
@@ -34,7 +29,6 @@ const createChemoSchedule = async (req, res) => {
       id_user = req.user.id_user;
     }
 
-    // Create new ChemoSchedule
     const newChemoSchedule = await ChemoSchedule.create({
       tujuan_kemoterapi,
       tanggal_kemoterapi,
@@ -44,12 +38,12 @@ const createChemoSchedule = async (req, res) => {
       note,
     });
 
-    let notifTime = momentz(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes').startOf('minute');
+    const notifTime = momentz(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm')
+      .subtract(remember_before_minutes, 'minutes')
+      .startOf('minute');
 
     if (notifTime.isSameOrAfter(moment().startOf('minute'))) {
       await cronController.scheduleNotification(newChemoSchedule, 'chemotherapy');
-    } else {
-      // do something in the future
     }
 
     return res.status(201).json({
@@ -62,173 +56,122 @@ const createChemoSchedule = async (req, res) => {
     return res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
-      error: {
-        message: error.message,
-      },
+      error: { message: error.message },
     });
   }
 };
 
+// Update Chemo Schedule
 const updateChemoSchedule = async (req, res) => {
   try {
-    const {
-      id_chemoSchedule
-    } = req.params;
+    const { id_chemoSchedule } = req.params;
 
-    // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
         code: "BAD_REQUEST",
-        error: {
-          message: errors.array(),
-        },
+        error: errors.array(),
       });
     }
 
-    // Extract data from request body
     let {
       tujuan_kemoterapi,
       tanggal_kemoterapi,
       waktu_kemoterapi,
       remember_before_minutes,
       id_user,
-      notes,
+      note,
     } = req.body;
 
-    const scheduleToUpdate = await ChemoSchedule.findOne({
-      where: {
-        id_chemoSchedule: id_chemoSchedule,
-        status: "active",
-      },
+    const schedule = await ChemoSchedule.findOne({
+      where: { id_chemoSchedule, status: "active" },
     });
 
-    if (!scheduleToUpdate) {
+    if (!schedule) {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
-        error: {
-          message: "chemo schedule not found",
-        },
+        error: { message: "ChemoSchedule not found" },
       });
     }
 
-    if (scheduleToUpdate.is_sent) {
+    if (schedule.is_sent) {
       return res.status(403).json({
         success: false,
         code: "FORBIDDEN",
-        error: {
-          message: "sorry can't update, notif is sent",
-        },
+        error: { message: "Cannot update. Notification already sent." },
       });
     }
 
-    if (scheduleToUpdate.waktu_kemoterapi !== waktu_kemoterapi || scheduleToUpdate.tanggal_kemoterapi !== tanggal_kemoterapi) {
-      const notifTime = momentz(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm').subtract(remember_before_minutes, 'minutes').startOf('minute');
+    const timeChanged = (
+      schedule.tanggal_kemoterapi !== tanggal_kemoterapi ||
+      schedule.waktu_kemoterapi !== waktu_kemoterapi
+    );
 
-      const passedTime = notifTime.isBefore(moment()); // Check if updateTime is in the past or the same as now
+    if (timeChanged) {
+      const notifTime = momentz(`${tanggal_kemoterapi} ${waktu_kemoterapi}`, 'YYYY-MM-DD HH:mm')
+        .subtract(remember_before_minutes, 'minutes')
+        .startOf('minute');
 
-      if (passedTime) {
-        // return res.status(403).json({
-        //   success: false,
-        //   code: "FORBIDDEN",
-        //   error: {
-        //     message: "Cannot update to a time that has already passed",
-        //   },
-        // });
-        // still can update to past, but cron job is deleted
-        cronController.stopScheduledJob(scheduleToUpdate, 'chemotherapy')
+      if (notifTime.isBefore(moment())) {
+        cronController.stopScheduledJob(schedule, 'chemotherapy');
       }
     }
 
     if (!id_user) {
-      id_user = scheduleToUpdate.id_user || req.user.id_user;
+      id_user = schedule.id_user || req.user.id_user;
     }
 
-    // Find and update the ChemoSchedule
-    const [updated] = await ChemoSchedule.update({
+    await schedule.update({
       tujuan_kemoterapi,
       tanggal_kemoterapi,
       waktu_kemoterapi,
       remember_before_minutes,
       id_user,
-      notes,
-    }, {
-      where: {
-        id_chemoSchedule,
-        status: "active",
-      },
+      note,
     });
 
-    if (!updated) {
-      return res.status(404).json({
-        success: false,
-        code: "NOT_FOUND",
-        error: {
-          message: "ChemoSchedule not found or already deleted",
-        },
-      });
-    }
-
-    // Fetch updated record
-    const updatedChemoSchedule = await ChemoSchedule.findOne({
-      where: {
-        id_chemoSchedule,
-        status: "active",
-      },
-    });
-
-    // async
-    cronController.updateNotificationSchedule(updatedChemoSchedule, 'chemotherapy');
+    // Update cron job
+    cronController.updateNotificationSchedule(schedule, 'chemotherapy');
 
     return res.status(200).json({
       success: true,
       message: "ChemoSchedule updated successfully",
-      data: updatedChemoSchedule,
+      data: schedule,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
-      error: {
-        message: error.message,
-      },
+      error: { message: error.message },
     });
   }
 };
 
+// Delete Chemo Schedule
 const deleteChemoSchedule = async (req, res) => {
   try {
-    const {
-      id_chemoSchedule
-    } = req.params;
+    const { id_chemoSchedule } = req.params;
 
-    // Find the ChemoSchedule to delete
-    const chemoSchedule = await ChemoSchedule.findOne({
-      where: {
-        id_chemoSchedule,
-        status: "active",
-      },
+    const schedule = await ChemoSchedule.findOne({
+      where: { id_chemoSchedule, status: "active" },
     });
 
-    if (!chemoSchedule) {
+    if (!schedule) {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
-        error: {
-          message: "ChemoSchedule not found",
-        },
+        error: { message: "ChemoSchedule not found" },
       });
     }
 
-    // Update status to 'deleted' and set deletedAt timestamp
-    await chemoSchedule.update({
+    await schedule.update({
       status: "deleted",
       deletedAt: new Date(),
     });
 
-    cronController.stopScheduledJob(chemoSchedule, 'chemotherapy');
+    cronController.stopScheduledJob(schedule, 'chemotherapy');
 
     return res.status(200).json({
       success: true,
@@ -238,77 +181,57 @@ const deleteChemoSchedule = async (req, res) => {
     return res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
-      error: {
-        message: error.message,
-      },
+      error: { message: error.message },
     });
   }
 };
 
+// Get One Chemo Schedule
 const getOneChemoSchedule = async (req, res) => {
   try {
-    const {
-      id_chemoSchedule
-    } = req.params;
+    const { id_chemoSchedule } = req.params;
 
-    const chemoSchedule = await ChemoSchedule.findOne({
-      where: {
-        id_chemoSchedule,
-        status: "active",
-      },
+    const schedule = await ChemoSchedule.findOne({
+      where: { id_chemoSchedule, status: "active" },
     });
 
-    if (!chemoSchedule) {
+    if (!schedule) {
       return res.status(404).json({
         success: false,
         code: "NOT_FOUND",
-        error: {
-          message: "ChemoSchedule not found",
-        },
+        error: { message: "ChemoSchedule not found" },
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: chemoSchedule,
+      data: schedule,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
-      error: {
-        message: error.message,
-      },
+      error: { message: error.message },
     });
   }
 };
 
+// Get All Chemo Schedules
 const getAllChemoSchedules = async (req, res) => {
   try {
-    const {
-      page = 1, pageSize = 10
-    } = req.body;
-    let {
+    const { page = 1, pageSize = 10 } = req.body;
+    const filter = req.body?.filter || {};
+    const { status = "active", id_user } = filter;
+
+    const whereClause = {
       status,
-      id_user
-    } =
-    req.body && req.body.filter ? req.body.filter : {
-      status: "active"
+      ...(id_user && { id_user }),
     };
 
-    let whereClause = {
-      status,
-      ...(id_user && {
-        id_user
-      }), // Add id_user to the filter if it exists
-    };
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize);
 
-    const {
-      count,
-      rows
-    } = await ChemoSchedule.findAndCountAll({
+    const { count, rows } = await ChemoSchedule.findAndCountAll({
       where: whereClause,
       offset,
       limit,
@@ -325,9 +248,7 @@ const getAllChemoSchedules = async (req, res) => {
     return res.status(500).json({
       success: false,
       code: "INTERNAL_SERVER_ERROR",
-      error: {
-        message: error.message,
-      },
+      error: { message: error.message },
     });
   }
 };

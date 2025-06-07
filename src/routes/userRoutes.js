@@ -259,7 +259,6 @@ api.post('/update_password/api/update_password', async (req, res) => {
 });
 
 api.get('/update_password/:token', async (req, res) => {
-    console.log('masuk sini')
     const {
         token
     } = req.params;
