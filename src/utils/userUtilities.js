@@ -81,18 +81,15 @@ function decrypt(encryptedText, salt) {
 }
 
 function isEncrypted(password) {
-  // Misalnya password terenkripsi menggunakan AES, panjangnya lebih dari 64 karakter.
-  // HEX format (setidaknya lebih panjang dari 64 karakter)
-  if (/^[a-f0-9]{32,}$/i.test(password)) {
-    return true;
-  }
-  
-  // Base64 format (karena banyak enkripsi menggunakan base64 encoding)
-  if (/^[A-Za-z0-9+/=]+$/.test(password)) {
-    return true;
-  }
+  if (typeof password !== 'string') return false;
 
-  return false;
+  // Cek kemungkinan HEX AES (panjang minimal 64 karakter dan pola heksadesimal)
+  const isHex = /^[a-f0-9]+$/i.test(password) && password.length >= 64;
+
+  // Cek kemungkinan Base64 (panjang minimal 64 karakter juga, agar tidak terdeteksi dari password biasa)
+  const isBase64 = /^[A-Za-z0-9+/=]+$/.test(password) && password.length >= 64;
+
+  return isHex || isBase64;
 }
 
 
