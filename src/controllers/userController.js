@@ -175,7 +175,7 @@ const login = async (req, res) => {
     // Check password
     let isMatch = false;
     
-    if (password == isEncrypted(user.password) ? decrypt(user.password, process.env.SALT) : user.password) {
+    if (password == (isEncrypted(user.password) ? decrypt(user.password, process.env.SALT) : user.password)) {
       isMatch = true;
     }
     if (!isMatch) {
